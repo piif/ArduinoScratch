@@ -3,7 +3,6 @@
 	<name>ArduinoScratch</name>
 	<comment></comment>
 	<projects>
-		<project>ArduinoTools</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

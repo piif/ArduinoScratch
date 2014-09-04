@@ -36,7 +36,7 @@ avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.1646306142/av
 avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.1646306142/avrdude/NoVerify=false
 avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.1646306142/avrdude/NoWrite=false
 avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.1646306142/avrdude/OtherOptions=
-avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.1646306142/avrdude/ProgrammerID=programmerconfig.4
+avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.1646306142/avrdude/ProgrammerID=programmerconfig.2
 avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.1646306142/avrdude/UseCounter=false
 avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.1646306142/avrdude/WriteEEPROM=false
 avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.1646306142/avrdude/WriteFlash=true
@@ -57,7 +57,7 @@ avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.407009932.142
 avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.407009932.1424545145/avrdude/NoVerify=false
 avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.407009932.1424545145/avrdude/NoWrite=false
 avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.407009932.1424545145/avrdude/OtherOptions=
-avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.407009932.1424545145/avrdude/ProgrammerID=programmerconfig.3
+avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.407009932.1424545145/avrdude/ProgrammerID=programmerconfig.1
 avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.407009932.1424545145/avrdude/UseCounter=false
 avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.407009932.1424545145/avrdude/WriteEEPROM=false
 avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.407009932.1424545145/avrdude/WriteFlash=true
@@ -78,7 +78,7 @@ avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.407009932/avr
 avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.407009932/avrdude/NoVerify=false
 avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.407009932/avrdude/NoWrite=false
 avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.407009932/avrdude/OtherOptions=
-avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.407009932/avrdude/ProgrammerID=programmerconfig.4
+avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.407009932/avrdude/ProgrammerID=programmerconfig.1
 avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.407009932/avrdude/UseCounter=false
 avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.407009932/avrdude/WriteEEPROM=false
 avrtarget/de.innot.avreclipse.configuration.app.release.1277106742.407009932/avrdude/WriteFlash=true
