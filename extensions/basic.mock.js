@@ -1,12 +1,14 @@
 // basic example, see http://scratch.mit.edu/projects/26016195/#editor
 // and load this file in browser with :
-// ScratchExtensions.loadExternalJS("http://localhost/scratch/extension/hsv2rgb.js")
+// ScratchExtensions.loadExternalJS("http://localhost/scratch/extension/basic.mock.js")
 
 
 // TODO : put this code in a external lib
 // => how to load it ?
-function Gateway() {
+function Gateway(extensionName) {
 	var that = this;
+	this.name = extensionName;
+
 	this.initialize = function (readyCallback) {
 		var result = true;
 		if (readyCallback) {
@@ -44,7 +46,7 @@ function Gateway() {
 myExtension = new (function() {
 	var ext = this;
 
-	var gateway = new Gateway();
+	var gateway = new Gateway("basic");
 	var status = {
 		led: "off",
 		buttonPressed: false

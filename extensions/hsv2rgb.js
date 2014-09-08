@@ -5,6 +5,7 @@
 new (function() {
 	var ext = this;
 
+	// from http://www.easyrgb.com/index.php?X=MATH&H=19#text21
 	ext.HSVtoRGB = function(H, S, V) {
 		H /= 200.0;
 		S /= 100.0;
@@ -66,6 +67,7 @@ new (function() {
 		return v1;
 	};
 
+        // from http://www.easyrgb.com/index.php?X=MATH&H=19#text19
 	ext.HSLtoRGB = function(H, S, L) {
 		H /= 200.0;
 		S /= 100.0;
