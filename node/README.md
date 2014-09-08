@@ -11,3 +11,9 @@ a terme :
 - on fait suivre les données, as is.
 
 /!\ un seul client à la fois du coup ...
+
+TODO:
+- comment charger socketio PUIS le reste quand socket est pret ?
+  load... accepte peut être une callback en 2eme argument ?
+- mettre les "lib" Gateway dans un externe => surement le même pb qu'au dessus
+- tester en version plugin
