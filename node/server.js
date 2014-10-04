@@ -1,10 +1,14 @@
+var path = require('path'),
+	fs = require('fs'),
+	url = require('url'),
+	SerialPort = require('serialport').SerialPort;
+
+var ROOT = path.dirname(__dirname);
+console.log(ROOT);
+
 var HTTP_PORT = 8000,
 	HTTP_HOST = "localhost",
 	HTTP_ROOT = "http://" + HTTP_HOST + ":" + HTTP_PORT + "/";
-
-var fs = require('fs'),
-	url = require('url'),
-	SerialPort = require('serialport').SerialPort;
 
 // initialize serialport
 // remember to change this string if your arduino is using a different serial
@@ -32,15 +36,23 @@ var readFile = function(pathname, res) {
 		return res.end('not found');
 	}
 
-	fs.readFile('..' + pathname, function(err, data) {
+	fs.readFile(ROOT + "/extensions/lib/autoPrepend.js", function(err, prepend) {
 		if (err) {
 			console.log(err);
 			res.writeHead(500);
-			return res.end('Error loading client.html');
+			return res.end('Error loading auto prepend file');
 		}
-		res.writeHead(200);
-		data = data.toString().replace(/<<<THISURL>>>/g, HTTP_ROOT);
-		res.end(data);
+		fs.readFile(ROOT + pathname, function(err, data) {
+			if (err) {
+				console.log(err);
+				res.writeHead(500);
+				return res.end('Error loading file');
+			}
+			res.writeHead(200);
+			data = prepend.toString() + data.toString();
+			//.replace(/<<<THISURL>>>/g, HTTP_ROOT);
+			res.end(data);
+		});
 	});
 };
 	

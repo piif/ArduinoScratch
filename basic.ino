@@ -4,15 +4,19 @@
 #endif
 
 #define LED 13
+// PCMSK0:4 + Int PCI0
 #define BUTTON 12
 
 bool ledState = LOW;
-bool buttonState = HIGH;
-bool buttonLastChange = 0;
 
 void setup(void) {
 	pinMode(LED, OUTPUT);
 	digitalWrite(LED, LOW);
+
+	// enable interrupt for PCINT4 = D12
+	PCMSK0 |= 1 << 4;
+	// enable interrupt for PCI0 (pcint0-7)
+	PCICR |= 1;
 
 	// TODO : bind raising interrupt on this digital input
 	pinMode(BUTTON, INPUT_PULLUP);
@@ -20,16 +24,27 @@ void setup(void) {
 	Serial.begin(DEFAULT_BAUDRATE);
 }
 
-void loop() {
-	// test button
+volatile bool mustSendButton = false;
+volatile bool buttonState = HIGH;
+#define BOUND_DELAY 100
+volatile int buttonLastChange = 0;
+
+ISR(PCINT0_vect) {
 	bool b = digitalRead(BUTTON);
-	if (b != buttonState && millis() - buttonLastChange > 100) {
-		//Serial.println(millis() - buttonLastChange);
+	if (b != buttonState && millis() - buttonLastChange > BOUND_DELAY) {
 		buttonLastChange = millis();
 		buttonState = b;
 		if (buttonState == LOW) {
-			Serial.println('!');
+			mustSendButton = true;
 		}
+	}
+}
+
+void loop() {
+	// test button
+	if (mustSendButton) {
+		Serial.println('!');
+		mustSendButton = false;
 	}
 
 	// test input
