@@ -11,7 +11,7 @@ declareModule(
 	
 		this.onSocketNotification = function(data) {
 			if (that._dataCallback) {
-				console.log("<<< " + data);
+//				console.log("<<< " + data);
 				that._dataCallback(data);
 			}
 		};
@@ -32,7 +32,7 @@ declareModule(
 		};
 	
 		this.send = function (data) {
-			console.log(">>> " + data);
+//			console.log(">>> " + data);
 			socket.emit('to_arduino', data);
 		};
 	

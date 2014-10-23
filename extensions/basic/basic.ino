@@ -13,12 +13,12 @@ void setup(void) {
 	pinMode(LED, OUTPUT);
 	digitalWrite(LED, LOW);
 
+	// TODO : some ifdef to handle other arduino variants
 	// enable interrupt for PCINT4 = D12
 	PCMSK0 |= 1 << 4;
 	// enable interrupt for PCI0 (pcint0-7)
 	PCICR |= 1;
 
-	// TODO : bind raising interrupt on this digital input
 	pinMode(BUTTON, INPUT_PULLUP);
 
 	Serial.begin(DEFAULT_BAUDRATE);
