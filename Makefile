@@ -6,7 +6,7 @@ export PROJECT_DIR := $(dir $(realpath ${MAKEFILE_LIST}))
 CORE_DIR := ${PROJECT_DIR}../ArduinoCore/
 
 # other arduino librairies project pathes this project depends on
-export DEPENDENCIES := ${CORE_DIR} ${CORE_DIR}../ArduinoLibs/
+export DEPENDENCIES := ${CORE_DIR} ${CORE_DIR}../ArduinoTools/
 # ${CORE_DIR}../ArduinoTools/
 
 # generate assembler source code also
