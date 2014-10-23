@@ -105,9 +105,9 @@ void loop() {
 			if (readBytes(data, 1, b >= 'a' && b <= 'z')) {
 				Color c;
 				HLtoRGB(data[0], light, &c);
-				Serial.print(c.r); Serial.print(", ");
-				Serial.print(c.g); Serial.print(", ");
-				Serial.println(c.b);
+//				Serial.print(c.r); Serial.print(", ");
+//				Serial.print(c.g); Serial.print(", ");
+//				Serial.println(c.b);
 				if (initialized) {
 					stripAll(c);
 				}
