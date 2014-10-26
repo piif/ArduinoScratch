@@ -53,6 +53,11 @@ declareModule("ledStrip", deps, function(moduleName) {
 					colors.append(0);
 				}
 			}
+//			colors.unshift('C'.charCodeAt(0));
+//			var u8 = new Uint8Array(colors);
+//			console.log(u8)
+//			gateway.send(u8);
+// => doesn't work : server receive weird object => keep ascii version.
 			gateway.send("c" + colors.join(',') + "\n");
 		};
 

@@ -69,7 +69,7 @@ var readFile = function(pathname, res) {
  * 
  */
 var sendMessage = function(buffer, socket) {
-	console.log("<<< " + buffer);
+//	console.log("<<< " + buffer);
 	// concatenating the string buffers sent via usb port
 	arduinoMessage += buffer.toString();
 
@@ -101,10 +101,8 @@ io.sockets.on('connection', function(socket) {
 	// listen all the websocket "lightStatus" messages coming from the
 	// client.html page
 	socket.on('to_arduino', function(data) {
-		console.log(">>> " + data);
-		sp.write(data + '\r', function() {
-			// log the light status into the terminal
-		});
+//		console.log(">>> ", data, data.length);
+		sp.write(data);
 	});
 });
 
@@ -121,6 +119,5 @@ sp.on('open', function() {
 	console.log('Port opened!');
 });
 
-// L3T'S R0CK!!!
 // creating the server ( localhost:8000 )
 app.listen(HTTP_PORT);
