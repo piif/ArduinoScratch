@@ -20,6 +20,13 @@ public:
 		data = NULL;
 	}
 
+	List<T> clone() {
+		List<T> *cloned = new List<T>();
+		cloned->length = length;
+		cloned->resize(length);
+		memmove(cloned->data, data, sizeof(T) * length);
+	}
+
 	T operator[](int i) {
 		if (i < 1 || i > length) {
 			throw out_of_range("List index out of range");

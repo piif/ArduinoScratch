@@ -8,12 +8,9 @@ var path = require('path'),
 // config file & content
 var configFileName, config;
 // source reference & content
-var sourceReference, source;
+var sourceReference, sourceName, source;
 //parsed source
-var ast = {
-	"variables" : [],
-	"sprites" : [],
-};
+var ast;
 
 // result
 var output;
@@ -37,7 +34,6 @@ function parseArgs() {
 }
 
 function loadConfig(resolve, reject) {
-	console.log("loadConfig " + configFileName);
 	fs.readFile(configFileName, function(err, data) {
 		if (err) {
 			reject("config load failed : " + err);
@@ -56,8 +52,9 @@ function loadSource(resolve, reject) {
 			reject("project reference not specified");
 		}
 	}
-	console.log("loadSource " + sourceReference);
+//	console.log("loadSource " + sourceReference);
 	if (typeof sourceReference === "number") {
+		sourceName = sourceReference;
 		http.get("http://projects.scratch.mit.edu/internalapi/project/" + sourceReference + "/get/", function(res) {
 			source = JSON.parse(res.content);
 			resolve(source);
@@ -65,6 +62,7 @@ function loadSource(resolve, reject) {
 			reject("project load failed : " + e.message);
 		});
 	} else {
+		sourceName = path.basename(sourceReference, path.extname(sourceReference));
 		fs.readFile(sourceReference, function(err, data) {
 			if (err) {
 				reject("project load failed : " + err);
@@ -77,18 +75,33 @@ function loadSource(resolve, reject) {
 }
 
 function parse(resolve, reject) {
-	console.log("parse");
 
-	ast.source = sourceReference;
-	var i;
+	ast = {
+		"sourceName": sourceName,
+		"source": sourceReference,
+		"costumes" : [],
+		"currentCostumeIndex": 0,
+		"variables" : [],
+		"scripts" : [],
+		"sprites" : []
+	};
+
+	var i, j;
 	// global items
+	// backgrounds
+	if (source.hasOwnProperty("costumes")) {
+		for(i = 0; i < source.costumes.length; i++) {
+			ast.costumes.push({ name: source.costumes[i].costumeName });
+		}
+		ast.currentCostumeIndex = source.currentCostumeIndex;
+	}
 	// variables
 	if (source.hasOwnProperty("variables")) {
 		for(i = 0; i < source.variables.length; i++) {
 			var v = source.variables[i];
 			if (!config.alreadyDefined.variables ||
 					config.alreadyDefined.variables.indexOf(v.name) === -1) {
-				console.log("V " + v.name);
+//				console.log("V " + v.name);
 				ast.variables.push(parseVariable(v.name, v.value, false));
 			}
 		}
@@ -99,11 +112,25 @@ function parse(resolve, reject) {
 			var l = source.lists[i];
 			if (!config.alreadyDefined.variables ||
 					config.alreadyDefined.variables.indexOf(l.listName) === -1) {
-				console.log("L " + l.listName);
+//				console.log("L " + l.listName);
 				ast.variables.push(parseVariable(l.listName, l.contents, true));
 			}
 		}
 	}
+	// top-level blocks
+	if (source.hasOwnProperty("scripts")) {
+		for(j = 0; j < source.scripts.length; j++) {
+			var entryPoint = source.scripts[j][2][0];
+			// only known ones and hats
+			if (dictionnary.statements.hasOwnProperty(entryPoint[0])
+					&& dictionnary.statements[entryPoint[0]].hasOwnProperty("kind")) {
+//				console.log("  b " + source.scripts[j][2][0][0] + "(" + source.scripts[j][2][0].slice(1) + ")");
+				ast.scripts.push(dictionnary.parseBlock(source.scripts[j][2], "hat"))
+			}
+		}
+		// content
+	}
+
 	// sprites
 	if (source.hasOwnProperty("children")) {
 		for(i = 0; i < source.children.length; i++) {
@@ -119,19 +146,27 @@ function parse(resolve, reject) {
 					alreadyDefined = config.alreadyDefined[sprite.objName];
 				}
 			}
-			console.log("S " + source.children[i].objName);
+//			console.log("S " + source.children[i].objName);
 			var spriteAst = {
 				"name": sprite.objName,
+				"costumes" : [],
+				"currentCostumeIndex": 0,
 				"variables" : [],
 				"scripts" : []
 			};
-			ast.sprites.push(spriteAst);
+			// costumes
+			if (sprite.hasOwnProperty("costumes")) {
+				for(var j = 0; j < sprite.costumes.length; j++) {
+					ast.costumes.push({ name: sprite.costumes[j].costumeName });
+				}
+				ast.currentCostumeIndex = sprite.currentCostumeIndex;
+			}
 			// variables
 			if (sprite.hasOwnProperty("variables")) {
 				for(j = 0; j < sprite.variables.length; j++) {
 					var v = sprite.variables[j];
 					if (!alreadyDefined.variables || alreadyDefined.variables.indexOf(v.name) === -1) {
-						console.log("  v " + v.name);
+//						console.log("  v " + v.name);
 						spriteAst.variables.push(parseVariable(v.name, v.value, true));
 					}
 				}
@@ -141,7 +176,7 @@ function parse(resolve, reject) {
 				for(j = 0; j < sprite.lists.length; j++) {
 					var l = sprite.lists[j];
 					if (!alreadyDefined.variables || alreadyDefined.variables.indexOf(l.listName) === -1) {
-						console.log("  l " + sprite.lists[j].listName);
+//						console.log("  l " + sprite.lists[j].listName);
 						spriteAst.variables.push(parseVariable(l.listName, l.contents, true));
 					}
 				}
@@ -153,12 +188,13 @@ function parse(resolve, reject) {
 					// only known ones and hats
 					if (dictionnary.statements.hasOwnProperty(entryPoint[0])
 							&& dictionnary.statements[entryPoint[0]].hasOwnProperty("kind")) {
-						console.log("  b " + sprite.scripts[j][2][0][0] + "(" + sprite.scripts[j][2][0].slice(1) + ")");
+//						console.log("  b " + sprite.scripts[j][2][0][0] + "(" + sprite.scripts[j][2][0].slice(1) + ")");
 						spriteAst.scripts.push(dictionnary.parseBlock(sprite.scripts[j][2], "hat"))
 					}
 				}
 				// content
 			}
+			ast.sprites.push(spriteAst);
 		}
 	}
 	resolve(ast);
@@ -186,14 +222,13 @@ result = new Promise(loadConfig)
 .then(function () { return new Promise(dumpAsC); })
 .then(
 	function(ok) {
-		console.log("ok");
 		console.log(ok);
 	},function(err) {
-		console.log("err");
+		console.error("err");
 		if (typeof err === "string") {
-			console.log(err);
+			console.error(err);
 		} else {
-			console.log(err.stack);
+			console.error(err.stack);
 		}
 		
 	}

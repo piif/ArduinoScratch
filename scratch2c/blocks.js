@@ -27,7 +27,6 @@ function assertType(expected, observed) {
 	case "costume":
 	case "sound":
 	case "key":
-	case "effect":
 	case "message":
 	case "var":
 		// special values, received as strings
@@ -62,16 +61,23 @@ function parseBlock(script, expectedType) {
 	} else {
 		throw new Error("Unknown block " + result.kind +  " in " + script[0]);
 	}
+
 	if (result.dict.hasOwnProperty("kind")) {
 		// hat => followed by blocks instead of 1 block list
 		result.content = parseStatementList(script.slice(1));
 		result.params = expandParams(result.dict.params, script[0].slice(1));
-	} else if (result.dict.hasOwnProperty("params")) {
+	} else {
+		var params;
+		if (result.dict.hasOwnProperty("params")) {
+			params = result.dict.params;
+		} else {
+			params = [];
+		}
 		try {
 			if (result.kind === "call") {
 				result.params = [ script[1] ].concat(expandParams(parsePrototype(script[1]), script.slice(2)));
 			} else {
-				result.params = expandParams(result.dict.params, script.slice(1));
+				result.params = expandParams(params, script.slice(1));
 			}
 		} catch(e) {
 			throw new Error("Parse error in block " + script + ": " + e);
@@ -232,6 +238,8 @@ function expandParams(paramDesc, paramValues) {
 	return result;
 }
 
+var effects = "color|fisheye|whirl|pixelate|mosaic|brightness|ghost";
+
 var statements = {
 	"forward:": { "params": [ "n" ] },
 	"turnRight:": { "params": [ "n" ] },
@@ -257,8 +265,8 @@ var statements = {
 	"lookLike:": { "params": [ "costume" ] },
 	"nextCostume": {},
 	"startScene": { "params": [ "costume" ] },
-	"changeGraphicEffect:by:": { "params": [ "effect", "n" ]},
-	"setGraphicEffect:to:": { "params": [ "effect", "n" ]},
+	"changeGraphicEffect:by:": { "params": [ effects, "n" ]},
+	"setGraphicEffect:to:": { "params": [ effects, "n" ]},
 	"filterReset": {},
 	"changeSizeBy:": { "params": [ "n" ] },
 	"setSizeTo:": { "params": [ "n" ] },

@@ -40,14 +40,181 @@ function findTypeOf(x) {
 	return { type: "???", value: x };
 }
 
-function dumpVariables(ast) {
+// return NULL terminated "," separated list
+function nt(list, terminator) {
+	return list.concat(terminator ? terminator : "NULL").join(", ");
+}
+function declareStatic(name, value, type) {
+	return [
+		type + " _my_" + name + "[] = { " + value + " };",
+		name + " =  _my_" + name + ";"
+	];
+}
+
+function dumpHats(ast, env, isScene) {
+	var output = [];
+	var k, e, kList, tList, cbList;
+
+	cbList = [];
+	for (k = 0; k < env.hats.whenGreenFlag.length; k++) {
+		var entry = env.hats.whenGreenFlag[k];
+		cbList.push(entry + "(env);");
+	}
+	output.push(
+		"virtual void whenGreenFlag() {",
+			cbList,
+		"}"
+	);
+
+	cbList = [];
+	for (k = 0; k < env.hats.whenClicked.length; k++) {
+		var entry = env.hats.whenClicked[k];
+		cbList.push(entry + "(env);");
+	}
+	output.push(
+		"virtual void whenClicked() {",
+			cbList,
+		"}"
+	);
+
+	kList = [];
+	for (k in env.hats.whenSceneStarts) {
+		if (!env.hats.whenSceneStarts.hasOwnProperty(k)) {
+			continue;
+		}
+		var entry = env.hats.whenSceneStarts[k];
+		cbList = [];
+		for (e = 0; e < entry.length; e++) {
+			cbList.push(entry[e] + "(env);");
+		}
+		kList.push("case " + k + ":", cbList.concat("break;") );
+	}
+	output.push(
+		"virtual void whenSceneStarts(int background) {",
+			[].concat("switch(background) {", cbList, "}"),
+		"}"
+	);
+
+	kList = [];
+	for (k in env.hats.whenIReceive) {
+		if (!env.hats.whenIReceive.hasOwnProperty(k)) {
+			continue;
+		}
+		var entry = env.hats.whenIReceive[k];
+		cbList = [];
+		for (e = 0; e < entry.length; e++) {
+			cbList.push(entry[e].callback + "(env);");
+		}
+		kList.push("case " + k + ": // " + entry[0].message, cbList.concat("break;") );
+	}
+	output.push(
+		"virtual void whenIReceive(int message) {",
+			[].concat("switch(message) {", kList, "}"),
+		"}"
+	);
+
+	kList = [];
+	for (k in env.hats.whenKeyPressed) {
+		if (!env.hats.whenKeyPressed.hasOwnProperty(k)) {
+			continue;
+		}
+		var entry = env.hats.whenKeyPressed[k];
+		cbList = [];
+		for (e = 0; e < entry.length; e++) {
+			cbList.push(entry[e].callback + "(env);");
+		}
+		var key;
+		switch(k) {
+		case '"space"':
+			key = "' '";
+			break;
+		default:
+			key = "'" + entry.key[1] + "'";
+			break;
+		}
+		kList.push("case " + key + ":", cbList.concat("break;") );
+	}
+	output.push(
+		"virtual void whenKeyPressed(char key) {",
+			[].concat("switch(key) {", kList, "}"),
+		"}"
+	);
+
+	kList = [];
+	for (k in env.hats.whenSensorGreaterThan) {
+		if (!env.hats.whenSensorGreaterThan.hasOwnProperty(k)) {
+			continue;
+		}
+		var entry = env.hats.whenSensorGreaterThan[k];
+		cbList = [];
+		for (e = 0; e < entry.length; e++) {
+			cbList.push("if (threshold > " + entry[e].threshold + ") {",
+				[ entry[e].callback + "(env, threshold);" ],
+			"}");
+		}
+		kList.push("case " + k + ":", cbList.concat("break;") );
+	}
+	output.push(
+		"virtual void whenSensorGreaterThan(sensorType sensor, int threshold) {",
+			[].concat("switch(sensor) {", kList, "}"),
+		"}"
+	);
+
+	if (!isScene) {
+		cbList = [];
+		for (k = 0; k < env.hats.whenCloned.length; k++) {
+			var entry = env.hats.whenCloned[k];
+			cbList.push(entry + "(env);");
+		}
+		output.push(
+			"virtual void whenCloned() {",
+				cbList,
+			"}"
+		);
+	}
+
+	return output;
+}
+
+function dumpConstructor(ast, env, isScene) {
+	if (isScene) {
+		return [
+			env.sceneName + "(Environment *env): Scene(env) {",
+			"}"
+		];
+	}
+	var cloneVars = [];
+	for (var i = 0; i < ast.variables.length; i++) {
+		var v = ast.variables[i];
+		var name = normalize(v.name);
+		var detail = findTypeOf(v.value);
+		if (detail.type === "List") {
+			cloneVars.push(name + " = from->" + name + ".clone();");
+		} else {
+			cloneVars.push(name + " = from->" + name + ";");
+		}
+	}
+	return [
+		"virtual " + env.spriteName + "* clone() {",
+			[ "return new " + env.spriteName + "(this);" ],
+		"}",
+		env.spriteName + "(" + env.spriteName + "*from): Sprite(from) {",
+			cloneVars,
+		"}",
+		env.spriteName + "(Environment *env): Sprite(env) {",
+		"}"
+	];
+}
+
+function dumpVariables(ast, env) {
 	var output = [];
 	for (var i = 0; i < ast.variables.length; i++) {
 		var v = ast.variables[i];
+		var name = normalize(v.name);
 		var detail = findTypeOf(v.value);
 		if (detail.type === "List") {
 			// TODO : how to specify type of list ?
-			output.push("List<" + detail.subType + "> " + normalize(v.name) + ";");
+			output.push("List<" + detail.subType + "> " + name + ";");
 		} else {
 			output.push(detail.type + " " + normalize(v.name) + " = " + detail.value + ";");
 		}
@@ -74,7 +241,7 @@ function dumpScripts(ast, env) {
 
 // dumps one hat script
 function dumpScript(ast, env) {
-	var funcName, event, params = [], body;
+	var funcName, event, params = [];
 	switch(ast.kind) {
 	case "whenGreenFlag":
 	case "whenClicked":
@@ -122,13 +289,55 @@ function dumpScript(ast, env) {
 		}
     	break;
 	}
-	body = dumpStatements(ast.content, env);
-	return ["void " + funcName + " (" + params.join(',') + ") {", body, "}"];
+	return [
+		"void " + funcName + " (" + params.concat("Environment *env").join(',') + ") {",
+			dumpStatements(ast.content, env),
+		"}"
+	];
 }
 
 function registerHat(event, params, callback, env) {
-	// TODO
-	// add a call to register() to a list to append to constructor
+	if (event === "whenSceneStarts") {
+		// TODO : find background index
+		var bg = params[0];
+		if (env.hats[event].hasOwnProperty(bg)) {
+			env.hats[event][bg].push(callback);
+		} else {
+			env.hats[event][bg] = [ callback ];
+		}
+	} else if (event === "whenKeyPressed") {
+		var k = params[0];
+		if (env.hats[event].hasOwnProperty(k)) {
+			env.hats[event][k].push(callback);
+		} else {
+			env.hats[event][k] = [ callback ];
+		}
+	} else if (event === "whenIReceive") {
+		var midx = findMessage(params[0], env);
+		if (env.hats[event].hasOwnProperty(midx)) {
+			env.hats[event][midx].push({message: params[0], callback: callback});
+		} else {
+			env.hats[event][midx] = [ {message: params[0], callback: callback} ];
+		}
+	} else if (event === "whenSensorGreaterThan") {
+		var s = params[0], t = params[1];
+		if (env.hats[event].hasOwnProperty(s)) {
+			env.hats[event][s].push({threshold: t, callback: callback});
+		} else {
+			env.hats[event][s] = [ {threshold: t, callback: callback} ];
+		}
+	} else {
+		env.hats[event].push(callback);
+	}
+}
+
+function findMessage(name, env) {
+	if (env.messages.hasOwnProperty(name)) {
+		return env.messages[name];
+	} else {
+		env.messages[name] = env.lastMessageId;
+		return env.lastMessageId++;
+	}
 }
 
 function dumpExpression(ast, env) {
@@ -152,18 +361,21 @@ function dumpExpression(ast, env) {
 	case "ypos":
 	case "heading":
 	case "costumeIndex":
+	case "costumeName":
 	case "scale":
 	case "volume":
+		return "this." + ast.kind;
 	case "tempo":
-		return "this._" + ast.kind;
+		return "this->env->runtime->_" + ast.kind;
 	case "sceneName":
-		return "_stage_._backdrop";
+		return "this->env->runtime->scene->costumeName";
 	case "getUserName":
 	case "mouseX":
 	case "mouseY":
 	case "soundLevel":
+		return "/* TODO" + ast.kind + " */ 0";
 	case "timer":
-		return "S_" + ast.kind;
+		return "env->runtime->timer()";
 
 	case "&":
 	case "|":
@@ -173,9 +385,12 @@ function dumpExpression(ast, env) {
 	case "-":
 	case "%":
 	case "<":
-	case "=":
 	case ">":
 		return "(" + dumpExpression(ast.params[0], env) + ")" + ast.kind + "(" + dumpExpression(ast.params[1], env) + ")";
+
+	// TODO : how to compare strings ?
+	case "=":
+		return "(" + dumpExpression(ast.params[0], env) + ") == (" + dumpExpression(ast.params[1], env) + ")";
 
 	case "not":
 		return "!(" + dumpExpression(ast.params[0], env) + ")";
@@ -185,7 +400,6 @@ function dumpExpression(ast, env) {
 	case "letter:of:":
 	case "stringLength:":
 	case "rounded":
-	case "computeFunction:of:":
 	case "touching:":
 	case "distanceTo:":
 	case "touchingColor:":
@@ -195,14 +409,18 @@ function dumpExpression(ast, env) {
 	case "senseVideoMotion":
 	case "timeAndDate":
 	case "timestamp":
-		return "S_" + normalize(ast.kind) + "(" + dumpParams(ast.params, env) + ")";
+		return "Scratch::" + normalize(ast.kind) + "(" + dumpParams(ast.params, env) + ")";
+
+	case "computeFunction:of:":
+		return "Scratch::" + normalize(ast.kind) + "(Scratch::f_" + ast.params[0] + ", " + dumpParams(ast.params.slice(1), env) + ")";
 
 	case "getAttribute:of:":
 		var obj, attr;
 		if (ast.params[1] === "_stage_") {
-			obj = "";
+			obj = "this->env->runtime->scene";
 		} else {
-			obj = "sprite_" + normalize(ast.params[1]) + ".";
+			// TODO : static/instance values ! how to find an instance ?
+			obj = "firstSprite_" + normalize(ast.params[1]);
 		}
 		switch(ast.params[0]) {
 		case "x position":
@@ -221,23 +439,20 @@ function dumpExpression(ast, env) {
 			attr = "_costumeName";
 			break;
 		case "background":
-			attr = "_backdrop";
+			attr = "_sceneName";
 			break;
 		case "size":
 			attr = "_scale";
 			break;
 		case "volume":
-			if (ast.params[1] === "_stage_") {
-				obj = "_stage_.";
-			}
 			attr = "_volume";
 			break;
 		default:
 			attr = normalize(ast.params[0]); // variable
 		}
-		return obj + attr;
+		return obj  + "->" + attr;
 	}
-	return "???";
+	return "// TODO " + ast.kind + " ???";
 }
 
 function dumpParams(params, env) {
@@ -253,7 +468,7 @@ function dumpStatements(ast, env) {
 	for (var i = 0; i < ast.length; i++) {
 		var s = ast[i];
 		switch(s.kind) {
-		// function calls
+			// "this" methods
 		case "forward:":
 		case "turnRight:":
 		case "turnLeft:":
@@ -273,13 +488,11 @@ function dumpStatements(ast, env) {
 		case "say:":
 		case "think:duration:elapsed:from:":
 		case "think:":
+		case "doAsk":
 		case "show":
 		case "hide":
 		case "lookLike:":
 		case "nextCostume":
-		case "startScene":
-		case "changeGraphicEffect:by:":
-		case "setGraphicEffect:to:":
 		case "filterReset":
 		case "changeSizeBy:":
 		case "setSizeTo:":
@@ -288,18 +501,53 @@ function dumpStatements(ast, env) {
 
 		case "playSound:":
 		case "doPlaySoundAndWait":
-		case "stopAllSounds":
-		case "playDrum":
-		case "rest:elapsed:from:":
 		case "noteOn:duration:elapsed:from:":
+		case "rest:elapsed:from:":
+		case "wait:elapsed:from:":
+
 		case "instrument:":
 		case "changeVolumeBy:":
 		case "setVolumeTo:":
+			result.push(normalize(s.kind) + "(" + dumpParams(s.params, env) + ");");
+			break;
+
+		case "changeGraphicEffect:by:":
+		case "setGraphicEffect:to:":
+			result.push(normalize(s.kind) + "(Effect_" + s.params[0] + ", " + dumpParams(s.params.slice(1), env) + ");");
+			break;
+
+		case "createCloneOf":
+			var obj;
+			if (s.params[0] === "myself") {
+				obj = "this";
+			} else {
+				obj = "firstSprite_" + normalize(s.params[0]);
+			}
+			result.push(obj + "->createCloneOf();");
+			break;
+
+		case "deleteClone":
+			result.push(normalize(s.kind) + "(" + dumpParams(s.params, env) + ");");
+			break;
+
+			// global methods with "this" argument
+		case "stampCostume":
+			// TODO : call Scratch::... with local argument
+	    	result.push("// " + s.kind);
+			break;
+
+			// scene methods
+		case "startScene":
+			result.push("env->runtime->scene->" + normalize(s.kind) + "(" + dumpParams(s.params, env) + ");");
+			break;
+
+			// global methods
+		case "stopAllSounds":
+		case "playDrum":
 		case "changeTempoBy:":
 		case "setTempoTo:":
-		
+
 		case "clearPenTrails":
-		case "stampCostume":
 		case "putPenDown":
 		case "putPenUp":
 		case "penColor:":
@@ -309,22 +557,19 @@ function dumpStatements(ast, env) {
 		case "setPenShadeTo:":
 		case "changePenSizeBy:":
 		case "penSize:":
-		
+
+		case "timerReset":
+			result.push("env->runtime->" + normalize(s.kind) + "(" + dumpParams(s.params, env) + ");");
+			break;
+
+			// this method, but impact message list
 		case "broadcast:":
 		case "doBroadcastAndWait":
-
-		case "createCloneOf":
-		case "deleteClone":
-		case "timerReset":
-	    	// TODO
-	    	result.push(s.kind);
-	    	break;
+			var  m = findMessage(s.params[0], env);
+			result.push("env->runtime->" + normalize(s.kind) + "(" + m + ");");
+			break;
 
 		// control structures
-		case "wait:elapsed:from:":
-	    	// TODO
-	    	result.push(s.kind);
-	    	break;
 		case "doRepeat":
 			env.varCount++;
 			var v = "__l" + env.varCount;
@@ -350,7 +595,7 @@ function dumpStatements(ast, env) {
 			break;
 		case "doWaitUntil":
 	    	// TODO
-	    	result.push(s.kind);
+	    	result.push("// " + s.kind);
 	    	break;
 		case "doUntil":
 			// TODO : verify in scratch : while or do/while ?
@@ -367,7 +612,7 @@ function dumpStatements(ast, env) {
 	    	break;
 		case "stopScripts":
 	    	// TODO
-	    	result.push(s.kind);
+	    	result.push("// " + s.kind);
 	    	break;
 
 		case "call":
@@ -378,7 +623,6 @@ function dumpStatements(ast, env) {
 
 		// variable changes
 	    case "setVar:to:":
-console.log("setVar:to:", s.params);
 	    	result.push(normalize(s.params[0]) + " = " + dumpExpression(s.params[1], env) + ";");
 	    	break;
 	    case "changeVar:by:":
@@ -390,30 +634,29 @@ console.log("setVar:to:", s.params);
 	    	break;
 	    case "deleteLine:ofList:":
 	    	if (s.params[0] === "last") {
-	    		result.push(normalize(s.params[1]) + ".remove(" + normalize(s.params[1]) + ".length));");
+	    		result.push(normalize(s.params[1]) + ".remove(" + normalize(s.params[1]) + ".length);");
 	    	} else {
 	    		result.push(normalize(s.params[1]) + ".remove(" + dumpExpression(s.params[0], env) + ");");
 	    	}
 	    	break;
 	    case "insert:at:ofList:":
 	    	if (s.params[0] === "last") {
-	    		result.push(normalize(s.params[2]) + ".insertAt(" + normalize(s.params[2]) + ".length), " + dumpExpression(s.params[1], env) + ");");
+	    		result.push(normalize(s.params[2]) + ".insertAt(" + normalize(s.params[2]) + ".length, " + dumpExpression(s.params[1], env) + ");");
 	    	} else if (s.params[0] === "random") {
-	    		result.push(normalize(s.params[2]) + ".insertAt(S_random(1," + normalize(s.params[2]) + ".length), " + dumpExpression(s.params[1], env) + ");");
+	    		result.push(normalize(s.params[2]) + ".insertAt(Scratch::random(1," + normalize(s.params[2]) + ".length), " + dumpExpression(s.params[1], env) + ");");
 	    	} else {
 	    		result.push(normalize(s.params[2]) + ".insertAt(" + dumpExpression(s.params[0], env) + "," + dumpExpression(s.params[1], env) + ");");
 	    	}
 	    	break;
 	    case "setLine:ofList:to:":
 	    	if (s.params[0] === "last") {
-	    		result.push(normalize(s.params[1]) + ".setAt(" + normalize(s.params[1]) + ".length), " + dumpExpression(s.params[2], env) + ");");
+	    		result.push(normalize(s.params[1]) + ".setAt(" + normalize(s.params[1]) + ".length, " + dumpExpression(s.params[2], env) + ");");
 	    	} else {
 	    		result.push(normalize(s.params[1]) + ".setAt(" + dumpExpression(s.params[0], env) + "," + dumpExpression(s.params[2], env) + ");");
 	    	}
 	    	break;
 
 	    // Silently ignored
-		case "doAsk":
 		case "setVideoState":
 		case "setVideoTransparency":
 
@@ -421,29 +664,60 @@ console.log("setVar:to:", s.params);
 	    case "hideVariable:":
 	    case "showList:":
 	    case "hideList:":
+	    	result.push("// " + s.kind);
 	    	break;
 		}
 	}
 	return result;
 }
 
-function dumpSprites(ast) {
+function dumpSprites(ast, env) {
 	var output = [ "// sprites" ];
-	var env = {
-		messageHandlers: {},
-		starters: []
-	};
 	for (var i = 0; i < ast.sprites.length; i++) {
-		var s = ast.sprites[i];
-		output.push("class sprite_" + normalize(s.name) + " {");
-		var result = [].concat(
-			dumpVariables(s),
-			dumpScripts(s, env)
-		);
+		env.hats = {
+			whenSceneStarts: {},
+			whenGreenFlag: [],
+			whenClicked: [],
+			whenCloned: [],
+			whenKeyPressed: {},
+			whenIReceive: {},
+			whenSensorGreaterThan: {}
+		};
+		var sprite = ast.sprites[i];
+		env.spriteName = "Sprite_" + normalize(sprite.name);
+		env.spriteNames.push(env.spriteName);
+		output.push("class " + env.spriteName + ":public Sprite {", "public:");
+		var v = dumpVariables(sprite, env);
+		var s = dumpScripts(sprite, env);
+		var h = dumpHats(sprite, env, false); // must be done after dumpScripts
+		var c = dumpConstructor(sprite, env, false); // must be done after dumpScripts
+		var result = [].concat(v, c, h, s, "virtual ~" + env.spriteName + "() {}");
 		output.push(result);
-		output.push("}");
+		output.push("};");
 	}
 	return output;
+}
+
+function dumpScene(ast, env) {
+	env.hats = {
+		whenSceneStarts: {},
+		whenGreenFlag: [],
+		whenClicked: [],
+		whenKeyPressed: {},
+		whenIReceive: {},
+		whenSensorGreaterThan: {}
+	};
+	env.sceneName = "Scene_" + normalize(ast.sourceName);
+	var s = dumpScripts(ast, env);
+	var h = dumpHats(ast, env, true); // must be done after dumpScripts
+	var c = dumpConstructor(ast, env, true); // must be done after dumpScripts
+	return [
+		"// scene",
+		"class " + env.sceneName + ":public Scene {", "public:",
+			c, h, s,
+			[ "virtual ~" + env.sceneName + "() {}" ],
+		"};"
+	];
 }
 
 function indent(list, prefix) {
@@ -461,11 +735,76 @@ function indent(list, prefix) {
 	return result.join("\n");
 }
 
+function dumpProto(ast, env) {
+	var output = [];
+	
+	output.push("Environment *env = new Environment();");
+	output.push("// prototypes");
+	output.push("class " + env.mainClass + ";");
+	for (var i = 0; i < env.spriteNames.length; i++) {
+		output.push("class " + env.spriteNames[i] + ";");
+	}
+	output.push("class " + env.sceneName + ";");
+	output = output.concat(dumpVariables(ast, env));
+
+	return output;
+}
+
+function dumpMain(ast, env) {
+	var output = [];
+	// main class and main function
+	output.push("class " + env.mainClass + ":public ScratchRuntime {", "public:");
+	var messages = Object.keys(env.messages);
+	var initSprites = [];
+	for (var i = 0; i < env.spriteNames.length; i++) {
+		initSprites.push("first" + env.spriteNames[i] + " = new " + env.spriteNames[i] + "(env);")
+		initSprites.push("sprites.append(first" + env.spriteNames[i] + ");");
+	}
+	for (var i = 0; i < env.spriteNames.length; i++) {
+		output.push([ env.spriteNames[i] + " *first" + env.spriteNames[i] + ";" ]);
+	}
+
+	output.push([
+		"const char *messages[" + messages.length + "] = { " + messages.join(", ") + " };",
+		"int nbMessages = " + messages.length + ";",
+		env.mainClass + "(Environment *env): ScratchRuntime(env) {",
+			[ "scene = new " + env.sceneName + "(env);" ],
+			initSprites,
+		"};"
+	]);
+	output.push("};");
+	output.push(env.mainClass + " runtime(env);");
+	output.push("int main() {");
+	output.push([
+		"runtime.run();",
+	]);
+	output.push("}");
+	return output;
+}
+
 function dump(ast) {
+	var env = {
+		mainClass: "Scratch_" + ast.sourceName,
+		messages: {}, // list of message labels, value = index
+		lastMessageId: 0,
+		spriteNames: []
+	};
+
+	// must dump sprites first to populate spriteNames and message lists
+	var sprites = dumpSprites(ast, env);
+	var scene = dumpScene(ast, env);
+	// then proto and main
+	var proto = dumpProto(ast, env);
+	var main = dumpMain(ast, env);
+
+	// but proto must be sent first
 	var output = [].concat(
 		"// project " + ast.source,
-		dumpVariables(ast),
-		dumpSprites(ast)
+		"#include \"Scratch.h\"",
+		proto,
+		sprites,
+		scene,
+		main
 	);
 	return indent(output);
 }

@@ -274,4 +274,17 @@ y a à peu près toutes les commandes, soit 172 ! (en fait, il y a des obsolète
 	ypos
 	ypos:
 	yScroll
-	
+
+Quelques joyeusetés sur les clones :
+quand un lutin est cloné :
+- ses variables le sont aussi => le constructeur doit initialiser les valeurs à celle du parent
+- le volume, la direction, les effects, le "rotation style" sont locaux
+- la distance à un lutin est relative à sa première instance
+- le "get of" vers un sprite est également relative à sa première instance
+- les "on click" sont relatif à une instance
+- toutes les instances recoivent les "on key"
+- create a clone of "sprite" se réfère à sa première instance
+  alors que create a clone of myself se réfère au clone qui exécute
+De plus :
+- on ne peut pas détruire la première instance ("delete this clone" est ignoré)
+- le tempo est global
