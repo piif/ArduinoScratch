@@ -10,19 +10,21 @@
 	#define time() (millis()/1000)
 	typedef long time_t;
 	#define pause(ms) delay(ms)
+	#define readInput() "TODO"
+	#define LOG(m) Serial.println(m)
 #else
 //	#include <stddef>
 	#include <time.h>
 	void pause(long ms) {
 		struct timespec t = {ms / 1000, 1000 * (ms % 1000)};
-		nanosleep(t, NULL);
+		nanosleep(&t, NULL);
 	}
+	#define readInput() "TODO"
+	#define LOG(m) puts(m)
 #endif
 
-#define readInput() "TODO"
-#define LOG(m) Serial.println(m)
 
-void ScratchObject::ScratchObject(Environment *env): env(env) {
+ScratchObject::ScratchObject(Environment *env): env(env) {
 }
 void ScratchObject::changeGraphicEffect_by_(Effect_t effect, float de) {
 	// TODO
@@ -55,14 +57,14 @@ Sprite::Sprite(Sprite *from) : Sprite(from->env) {
 	depth = from->depth;
 }
 
-virtual Sprite* Sprite::clone() {
-	return new Sprite(this);
-}
+//Sprite* Sprite::clone() {
+//	return new Sprite(this);
+//}
 
 #ifdef TURTLE
 void Sprite::forward_(int amount){
-	posx += amount * dx;
-	posy += amount * dy;
+	xpos += amount * dx;
+	ypos += amount * dy;
 }
 void Sprite::turnRight_(int angle){
 	heading -= angle;
@@ -80,37 +82,37 @@ void Sprite::heading_(int angle){
 	dy = sin(heading);
 }
 void Sprite::pointTowards_(Sprite *other){
-	dx = other->x - posx;
-	dy = other->y - _posy;
+	dx = other->xpos - xpos;
+	dy = other->ypos - ypos;
 	// TODO : normalze
 	// TODO : deduce new angle
 }
 void Sprite::gotoX_y_(int nx, int ny){
-	posx = nx; posy = ny;
+	xpos = nx; ypos = ny;
 }
 void Sprite::gotoSpriteOrMouse_(Sprite *other){
-	posx = other->posx;
-	posy = other->posy;
+	xpos = other->xpos;
+	ypos = other->ypos;
 }
 void Sprite::glideSecs_toX_y_elapsed_from_(int nx, int ny, int duration){
 	// TODO
 }
 void Sprite::changeXposBy_(int dw){
-	posx += dx;
+	xpos += dx;
 }
 void Sprite::xpos_(int nx){
-	posx = nx;
+	xpos = nx;
 }
 void Sprite::changeYposBy_(int dy){
-	posy += dy;
+	ypos += dy;
 }
 void Sprite::ypos_(int ny){
-	posy = ny;
+	ypos = ny;
 }
 void Sprite::bounceOffEdge(){
 	// TODO
 }
-void Sprite::setRotationStyle(rotationStyle_t r){
+void Sprite::setRotationStyle(RotationStyle_t r){
 	rotationStyle = r;
 }
 #endif
@@ -164,15 +166,19 @@ void Sprite::stampCostume() {
 
 bool Sprite::touching_(Sprite *s) {
 	// TODO
+	return false;
 }
 int Sprite::distanceTo_(Sprite *s) {
 	// TODO
+	return false;
 }
 bool Sprite::touchingColor_(Sprite *s, long color) {
 	// TODO
+	return false;
 }
 bool Sprite::color_sees_(long colorA, long colorB) {
 	// TODO
+	return false;
 }
 #endif
 
@@ -231,14 +237,14 @@ void Scene::startScene(int bg) {
 	// TODO : what should we do with destroyed hats during loop ?
 	// => delay destroy call but mark as deleted ?
 	int nbSprites = env->runtime->sprites.length; // avoid to loop over clones created during hats
-	whenSceneStarts();
-	for (int i = 0; i < nbSprites; i++) {
-		env->runtime->sprites[i]->whenSceneStarts();
+	whenSceneStarts(bg);
+	for (int i = 1; i <= nbSprites; i++) {
+		env->runtime->sprites[i]->whenSceneStarts(bg);
 	}
 }
 
 ScratchRuntime::ScratchRuntime(Environment *env) {
-	timerStart = time();
+	timerStart = time(NULL);
 	env->runtime = this;
 }
 
@@ -269,7 +275,7 @@ int ScratchRuntime::run() {
 
 	int nbFirst = sprites.length; // avoid to loop over clones created during green hats
 	scene->whenGreenFlag();
-	for (int i = 0; i < nbFirst; i++) {
+	for (int i = 1; i <= nbFirst; i++) {
 		sprites[i]->whenGreenFlag();
 	}
 	return 0;
@@ -281,7 +287,7 @@ void ScratchRuntime::broadcast_(int message) {
 void ScratchRuntime::doBroadcastAndWait(int message) {
 	int nbSprites = sprites.length; // avoid to loop over clones created during hats
 	scene->whenIReceive(message);
-	for (int i = 0; i < nbSprites; i++) {
+	for (int i = 1; i <= nbSprites; i++) {
 		sprites[i]->whenIReceive(message);
 	}
 }
@@ -334,24 +340,79 @@ void ScratchRuntime::penSize_(int s) {
 }
 
 void ScratchRuntime::timerReset() {
-	timerStart = time();
+	timerStart = time(NULL);
 }
 unsigned long ScratchRuntime::timer() {
-	return time() - timerStart;
+	return time(NULL) - timerStart;
 }
 
-int ScratchRuntime::keyPressed_(char k) {
+bool ScratchRuntime::keyPressed_(char k) {
 	// TODO
+	return false;
 }
-int ScratchRuntime::mousePressed() {
+bool ScratchRuntime::mousePressed() {
 	// TODO
+	return false;
 }
 int ScratchRuntime::senseVideoMotion() {
 	// TODO
+	return -1;
 }
-char *ScratchRuntime::timeAndDate() {
+const char *ScratchRuntime::timeAndDate(DateKind_t k) {
 	// TODO
+	return "";
 }
 long ScratchRuntime::timestamp() {
 	// TODO
+	return 0;
+}
+
+int Scratch::randomFrom_to_(int from, int to) {
+	// TODO
+	return from;
+}
+char * Scratch::concatenate_with_(char *a, char *b) {
+	// TODO
+	return a;
+}
+char Scratch::letter_of_(char *s, int pos) {
+	return s[pos - 1];
+}
+int Scratch::stringLength_(char *s) {
+	return strlen(s);
+}
+int Scratch::rounded(float f) {
+	return (int)f;
+}
+float Scratch::computeFunction_of_(MathFunc f, float v) {
+	switch(f) {
+	case f_sqrt:
+		return sqrt(v);
+	case f_abs:
+		return v >= 0 ? v : -v;
+	case f_sin:
+		return sin(v * M_PI / 180.0);
+	case f_cos:
+		return cos(v * M_PI / 180.0);
+	case f_tan:
+		return tan(v * M_PI / 180.0);
+	case f_asin:
+		return asin(v) * 180.0 / M_PI;
+	case f_acos:
+		return acos(v) * 180.0 / M_PI;
+	case f_atan:
+		return atan(v) * 180.0 / M_PI;
+	case f_e_:
+		return exp(v);
+	case f_10_:
+		return pow(v, 10);
+	case f_ln:
+		return log(v);
+	case f_log:
+		return log10(v);
+	case f_floor:
+		return floor(v);
+	case f_ceiling:
+		return ceil(v);
+	}
 }

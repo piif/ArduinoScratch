@@ -29,7 +29,7 @@ public:
 
 	T operator[](int i) {
 		if (i < 1 || i > length) {
-			throw out_of_range("List index out of range");
+			throw out_of_range("List[] index out of range");
 		}
 		return data[i - 1];
 	}
@@ -47,7 +47,7 @@ public:
 
 	T remove(int i) {
 		if (i < 1 || i > length) {
-			throw out_of_range("List index out of range");
+			throw out_of_range("List.remove index out of range");
 		}
 		T old = data[i - 1];
 		memmove(&(data[i - 1]), &(data[i]), sizeof(T) * (length - i));
@@ -62,7 +62,7 @@ public:
 			return;
 		}
 		if (i < 1 || i > length) {
-			throw out_of_range("List index out of range");
+			throw out_of_range("List.insertAt index out of range");
 		}
 		length++;
 		resize(length);
@@ -72,7 +72,7 @@ public:
 
 	void setAt(int i, T value) {
 		if (i < 1 || i > length) {
-			throw out_of_range("List index out of range");
+			throw out_of_range("List.setAt index out of range");
 		}
 		data[i - 1] = value;
 	}

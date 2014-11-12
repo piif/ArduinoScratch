@@ -38,3 +38,12 @@ ifneq (${TARGET},)
 	rm -rf ${PROJECT_DIR}target/${TARGET}
 endif
 	
+scratch: target/libscratch.a
+
+target/libscratch.a: target/Scratch.o
+	${AR} -r $@ $<
+#	ranlib $@
+
+CFLAGS=-g -Ilib -std=c++11
+target/Scratch.o: lib/Scratch.cpp lib/Scratch.h lib/List.h
+	${CXX} -c ${CFLAGS} $< -o $@
