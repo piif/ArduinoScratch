@@ -1,3 +1,5 @@
+// generation of C code from ast
+
 function isInt(n) {
 	return parseInt(n) === n;
 }
@@ -121,7 +123,7 @@ function dumpHats(ast, env, isScene) {
 		var entry = env.hats.whenKeyPressed[k];
 		cbList = [];
 		for (e = 0; e < entry.length; e++) {
-			cbList.push(entry[e].callback + "(env);");
+			cbList.push(entry[e] + "(env);");
 		}
 		var key;
 		switch(k) {
@@ -155,7 +157,7 @@ function dumpHats(ast, env, isScene) {
 		kList.push("case " + k + ":", cbList.concat("break;") );
 	}
 	output.push(
-		"virtual void whenSensorGreaterThan(sensorType sensor, int threshold) {",
+		"virtual void whenSensorGreaterThan(Sensor_t sensor, int threshold) {",
 			[].concat("switch(sensor) {", kList, "}"),
 		"}"
 	);
@@ -255,9 +257,9 @@ function dumpScript(ast, env) {
 		registerHat(ast.kind, ast.params, funcName, env);
 		break;
 	case "procDef":
-		funcName = "userFunc_" + normalize(ast.params[0]);
-		argTypes = ast.params[0].split(" ").slice(1);
-		argTypes.pop(); // remove "t" at end
+		var proto = ast.params[0].replace(/"(.*)( t)?"/, '$1');
+		funcName = "userFunc_" + normalize(proto);
+		argTypes = proto.split(" ").slice(1);
 		if (argTypes.length !== ast.params[1].length) {
 			return "// " + funcName + " : incoherency in argument list";
 		}
@@ -290,7 +292,7 @@ function dumpScript(ast, env) {
     	break;
 	}
 	return [
-		"void " + funcName + " (" + params.concat("Environment *env").join(',') + ") {",
+		"void " + funcName + " (" + ["Environment *env"].concat(params).join(',') + ") {",
 			dumpStatements(ast.content, env),
 		"}"
 	];
@@ -409,10 +411,10 @@ function dumpExpression(ast, env) {
 	case "senseVideoMotion":
 	case "timeAndDate":
 	case "timestamp":
-		return "Scratch::" + normalize(ast.kind) + "(" + dumpParams(ast.params, env) + ")";
+		return "Scratch::" + normalize(ast.kind) + "(" + dumpParams(ast.params, env).join(",") + ")";
 
 	case "computeFunction:of:":
-		return "Scratch::" + normalize(ast.kind) + "(Scratch::f_" + ast.params[0] + ", " + dumpParams(ast.params.slice(1), env) + ")";
+		return "Scratch::" + normalize(ast.kind) + "(Scratch::f_" + ast.params[0] + ", " + dumpParams(ast.params.slice(1), env).join(",") + ")";
 
 	case "getAttribute:of:":
 		var obj, attr;
@@ -460,7 +462,7 @@ function dumpParams(params, env) {
 	for (var p = 0; p < params.length; p++) {
 		result.push(dumpExpression(params[p], env));
 	}
-	return result.join(",");
+	return result;
 }
 
 function dumpStatements(ast, env) {
@@ -508,17 +510,17 @@ function dumpStatements(ast, env) {
 		case "instrument:":
 		case "changeVolumeBy:":
 		case "setVolumeTo:":
-			result.push(normalize(s.kind) + "(" + dumpParams(s.params, env) + ");");
+			result.push(normalize(s.kind) + "(" + dumpParams(s.params, env).join(",") + ");");
 			break;
 
 		case "changeGraphicEffect:by:":
 		case "setGraphicEffect:to:":
-			result.push(normalize(s.kind) + "(Effect_" + s.params[0] + ", " + dumpParams(s.params.slice(1), env) + ");");
+			result.push(normalize(s.kind) + "(Effect_" + s.params[0] + ", " + dumpParams(s.params.slice(1), env).join(",") + ");");
 			break;
 
 		case "createCloneOf":
 			var obj;
-			if (s.params[0] === "myself") {
+			if (s.params[0] === "_myself_") {
 				obj = "this";
 			} else {
 				obj = "firstSprite_" + normalize(s.params[0]);
@@ -527,7 +529,7 @@ function dumpStatements(ast, env) {
 			break;
 
 		case "deleteClone":
-			result.push(normalize(s.kind) + "(" + dumpParams(s.params, env) + ");");
+			result.push(normalize(s.kind) + "(" + dumpParams(s.params, env).join(",") + ");");
 			break;
 
 			// global methods with "this" argument
@@ -538,7 +540,7 @@ function dumpStatements(ast, env) {
 
 			// scene methods
 		case "startScene":
-			result.push("env->runtime->scene->" + normalize(s.kind) + "(" + dumpParams(s.params, env) + ");");
+			result.push("env->runtime->scene->" + normalize(s.kind) + "(" + dumpParams(s.params, env).join(",") + ");");
 			break;
 
 			// global methods
@@ -559,7 +561,7 @@ function dumpStatements(ast, env) {
 		case "penSize:":
 
 		case "timerReset":
-			result.push("env->runtime->" + normalize(s.kind) + "(" + dumpParams(s.params, env) + ");");
+			result.push("env->runtime->" + normalize(s.kind) + "(" + dumpParams(s.params, env).join(",") + ");");
 			break;
 
 			// this method, but impact message list
@@ -617,7 +619,7 @@ function dumpStatements(ast, env) {
 
 		case "call":
 			var funcName = "userFunc_" + normalize(s.params[0]);
-			var params = dumpParams(s.params.slice(1), env);
+			var params = [ "env" ].concat(dumpParams(s.params.slice(1), env)).join(",");
 	    	result.push(funcName + "(" + params + ");");
 	    	break;
 
@@ -635,6 +637,8 @@ function dumpStatements(ast, env) {
 	    case "deleteLine:ofList:":
 	    	if (s.params[0] === "last") {
 	    		result.push(normalize(s.params[1]) + ".remove(" + normalize(s.params[1]) + ".length);");
+	    	} else if (s.params[0] === "all") {
+	    		result.push(normalize(s.params[1]) + ".empty();");
 	    	} else {
 	    		result.push(normalize(s.params[1]) + ".remove(" + dumpExpression(s.params[0], env) + ");");
 	    	}
