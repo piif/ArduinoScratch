@@ -654,19 +654,20 @@ function dumpStatements(ast, env) {
 	    	}
 	    	break;
 	    case "insert:at:ofList:":
+	    	var prefix = normalize(s.params[2]) + ".insertAt(" + dumpExpression(s.params[1], env) + ", ";
 	    	if (s.params[0] === "last") {
-	    		result.push(normalize(s.params[2]) + ".insertAt(" + normalize(s.params[2]) + ".length, " + dumpExpression(s.params[1], env) + ");");
+	    		result.push(prefix + normalize(s.params[2]) + ".length);");
 	    	} else if (s.params[0] === "random") {
-	    		result.push(normalize(s.params[2]) + ".insertAt(Scratch::random(1," + normalize(s.params[2]) + ".length), " + dumpExpression(s.params[1], env) + ");");
+	    		result.push(prefix + "Scratch::random(1," + normalize(s.params[2]) + ".length));");
 	    	} else {
-	    		result.push(normalize(s.params[2]) + ".insertAt(" + dumpExpression(s.params[0], env) + "," + dumpExpression(s.params[1], env) + ");");
+	    		result.push(prefix + dumpExpression(s.params[0], env) + ");");
 	    	}
 	    	break;
 	    case "setLine:ofList:to:":
 	    	if (s.params[0] === "last") {
-	    		result.push(normalize(s.params[1]) + ".setAt(" + normalize(s.params[1]) + ".length, " + dumpExpression(s.params[2], env) + ");");
+	    		result.push(normalize(s.params[1]) + "[" + normalize(s.params[1]) + ".length] = " + dumpExpression(s.params[2], env) + ";");
 	    	} else {
-	    		result.push(normalize(s.params[1]) + ".setAt(" + dumpExpression(s.params[0], env) + "," + dumpExpression(s.params[2], env) + ");");
+	    		result.push(normalize(s.params[1]) + "[" + dumpExpression(s.params[0], env) + "] = " + dumpExpression(s.params[2], env) + ";");
 	    	}
 	    	break;
 
