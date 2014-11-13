@@ -3,7 +3,12 @@
 //main ?
 // enum of messages
 
+#ifndef SCRATCH_H
+#define SCRATCH_H
+
 #define TURTLE
+// #define SOUND
+// #define VIDEO
 
 #ifdef WITH_SCHEDULER
 	#include "Scheduler.h"
@@ -228,3 +233,5 @@ namespace Scratch {
 	int rounded(float f);
 	float computeFunction_of_(MathFunc f, float v);
 }
+
+#endif

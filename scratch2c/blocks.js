@@ -1,3 +1,5 @@
+// parsing of code from scratch json to ast
+
 function parseStatementList(list) {
 	if (list == null) {
 		return [];
@@ -41,6 +43,34 @@ function assertType(expected, observed) {
 	throw new Error(expected + " expected, not a " + observed);
 }
 
+//list of parsed extensions
+var extensions = {};
+
+function parseExtensions(extensionSpecs) {
+	for(var i = 0; i < extensionSpecs.length; i++) {
+		var ext = extensionSpecs[i];
+		var menus = {};
+		for(var m in ext.menus) {
+			if (!ext.menus.hasOwnProperty(m)) {
+				continue;
+			}
+			menus[m] = ext.menus[m]; //.join('|');
+		}
+		var entries = {};
+		for(var j = 0; j < ext.blockSpecs.length; j++) {
+			// ext.blockSpecs[j] = ["", "proto", "public name", default params ...]
+			var spec = ext.blockSpecs[j];
+			entries[spec[2]] = { params: parsePrototype(spec[1], menus) };
+		}
+		extensions[ext.extensionName] = { menus: menus, entries: entries };
+	}
+	return extensions;
+}
+
+function isHat(entry) {
+	return statements.hasOwnProperty(entry) && statements[entry].hasOwnProperty("kind");
+}
+
 // parse any block type
 function parseBlock(script, expectedType) {
 	var result = {};
@@ -59,7 +89,15 @@ function parseBlock(script, expectedType) {
 		result.dict = expressions[result.kind];
 		assertType(expectedType, result.dict.result);
 	} else {
-		throw new Error("Unknown block " + result.kind +  " in " + script[0]);
+		var p = result.kind.indexOf('.');
+		if (p !== -1 && extensions.hasOwnProperty(result.kind.substring(0, p))) {
+			result.extension = result.kind.substring(0, p);
+			result.method = result.kind.substring(p +1);
+			result.kind = "extension call";
+			result.dict = extensions[result.extension].entries[result.method];
+		} else {
+			throw new Error("Unknown block " + result.kind +  " in " + script[0]);
+		}
 	}
 
 	if (result.dict.hasOwnProperty("kind")) {
@@ -67,16 +105,16 @@ function parseBlock(script, expectedType) {
 		result.content = parseStatementList(script.slice(1));
 		result.params = expandParams(result.dict.params, script[0].slice(1));
 	} else {
-		var params;
-		if (result.dict.hasOwnProperty("params")) {
-			params = result.dict.params;
-		} else {
-			params = [];
-		}
 		try {
 			if (result.kind === "call") {
 				result.params = [ script[1] ].concat(expandParams(parsePrototype(script[1]), script.slice(2)));
 			} else {
+				var params;
+				if (result.dict.hasOwnProperty("params")) {
+					params = result.dict.params;
+				} else {
+					params = [];
+				}
 				result.params = expandParams(params, script.slice(1));
 			}
 		} catch(e) {
@@ -86,14 +124,13 @@ function parseBlock(script, expectedType) {
 	return result;
 }
 
-function parsePrototype(proto) {
+function parsePrototype(proto, menus) {
 	var result = [];
-	var argTypes = proto.split(" ").slice(1);
-	if (proto.match(/ s$/)) {
-		argTypes.pop(); // remove "t" at end
-	}
+	// split on '%' after first one => each item of returned array
+	// begins with the letter following a '%'
+	var argTypes = proto.substring(proto.indexOf('%')+1).split('%');
 	for (var p = 0; p < argTypes.length; p++) {
-		switch(argTypes[p][1]) {
+		switch(argTypes[p][0]) {
 		// %b	Boolean slot
 		case "b":
 			result.push("b");
@@ -111,8 +148,15 @@ function parsePrototype(proto) {
 		// %s	String slot
 		// %m.‹menu›	Readonly slot with menu
 		case "s":
-		case "m":
 			result.push("s");
+			break;
+		case "m":
+			if (menus) {
+				var m = /m\.(\w+)/.exec(argTypes[p])[1];
+				result.push(menus[m]);
+			} else {
+				result.push("s");
+			}
 			break;
 		}
 	}
@@ -199,7 +243,9 @@ function expandParams(paramDesc, paramValues) {
 			}
 			break;
 		default:
-			if (/\|/.test(d)) {
+			if (typeof d === "object" && typeof v === "string" && d.indexOf(v) !== -1) {
+				result.push(d.indexOf(v) + " /* " + v + " */");
+			} else if (/\|/.test(d)) {
 				var choices = d.split('|');
 				var specialChoice = null;
 				switch(choices[0]) {
@@ -345,7 +391,7 @@ var expressions = {
 	"getParam": { "params": [ "var", "s" ], result: "*" },
 	"contentsOfList:": { "params": [ "var" ], result: "*" },
 	"list:contains:": { "params": [ "var", "n" ], "result": "b" },
-	"getLine:ofList:": { "params": [ "n", "var" ], result: "*" },
+	"getLine:ofList:": { "params": [ "n|last", "var" ], result: "*" },
 	"lineCountOfList:": { "params": [ "var" ], "result": "n" },
 
 	"xpos": { "result": "n" },
@@ -403,6 +449,6 @@ var expressions = {
 	}
 };
 
-exports.statements = statements;
-exports.expressions = expressions;
+exports.isHat = isHat;
 exports.parseBlock = parseBlock;
+exports.parseExtensions = parseExtensions;

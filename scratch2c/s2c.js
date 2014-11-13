@@ -1,3 +1,5 @@
+// main program to convert scratch son in C++ code
+
 var path = require('path'),
 	fs = require('fs'),
 	Promise = require('promise'),
@@ -82,6 +84,7 @@ function parse(resolve, reject) {
 		"costumes" : [],
 		"currentCostumeIndex": 0,
 		"variables" : [],
+		"extensions" : [],
 		"scripts" : [],
 		"sprites" : []
 	};
@@ -99,36 +102,42 @@ function parse(resolve, reject) {
 	if (source.hasOwnProperty("variables")) {
 		for(i = 0; i < source.variables.length; i++) {
 			var v = source.variables[i];
-			if (!config.alreadyDefined.variables ||
+			if (!config.alreadyDefined || !config.alreadyDefined.variables ||
 					config.alreadyDefined.variables.indexOf(v.name) === -1) {
 //				console.log("V " + v.name);
 				ast.variables.push(parseVariable(v.name, v.value, false));
 			}
 		}
 	}
+
 	// lists
 	if (source.hasOwnProperty("lists")) {
 		for(i = 0; i < source.lists.length; i++) {
 			var l = source.lists[i];
-			if (!config.alreadyDefined.variables ||
+			if (!config.alreadyDefined || !config.alreadyDefined.variables ||
 					config.alreadyDefined.variables.indexOf(l.listName) === -1) {
 //				console.log("L " + l.listName);
 				ast.variables.push(parseVariable(l.listName, l.contents, true));
 			}
 		}
 	}
+
+	// extensions
+	if (source.hasOwnProperty("info") && source.info.hasOwnProperty("savedExtensions")) {
+//		console.log("E " + ext[j].extensionName);
+		ast.extensions = dictionnary.parseExtensions(source.info.savedExtensions);
+	}
+
 	// top-level blocks
 	if (source.hasOwnProperty("scripts")) {
 		for(j = 0; j < source.scripts.length; j++) {
-			var entryPoint = source.scripts[j][2][0];
-			// only known ones and hats
-			if (dictionnary.statements.hasOwnProperty(entryPoint[0])
-					&& dictionnary.statements[entryPoint[0]].hasOwnProperty("kind")) {
-//				console.log("  b " + source.scripts[j][2][0][0] + "(" + source.scripts[j][2][0].slice(1) + ")");
-				ast.scripts.push(dictionnary.parseBlock(source.scripts[j][2], "hat"))
+			var entryPoint = source.scripts[j][2];
+			// only hats
+			if (dictionnary.isHat(entryPoint[0][0])) {
+//				console.log("  b " + entryPoint[0][0] + "(" + entryPoint[0].slice(1) + ")");
+				ast.scripts.push(dictionnary.parseBlock(entryPoint, "hat"));
 			}
 		}
-		// content
 	}
 
 	// sprites
@@ -139,7 +148,8 @@ function parse(resolve, reject) {
 			}
 			var sprite = source.children[i];
 			var alreadyDefined = {};
-			if (config.alreadyDefined.hasOwnProperty(sprite.objName)) {
+			if (config.alreadyDefined
+					&& config.alreadyDefined.hasOwnProperty(sprite.objName)) {
 				if (config.alreadyDefined[sprite.objName] === true) {
 					continue;
 				} else {
@@ -184,12 +194,11 @@ function parse(resolve, reject) {
 			// top-level blocks
 			if (sprite.hasOwnProperty("scripts")) {
 				for(j = 0; j < sprite.scripts.length; j++) {
-					var entryPoint = sprite.scripts[j][2][0];
-					// only known ones and hats
-					if (dictionnary.statements.hasOwnProperty(entryPoint[0])
-							&& dictionnary.statements[entryPoint[0]].hasOwnProperty("kind")) {
-//						console.log("  b " + sprite.scripts[j][2][0][0] + "(" + sprite.scripts[j][2][0].slice(1) + ")");
-						spriteAst.scripts.push(dictionnary.parseBlock(sprite.scripts[j][2], "hat"))
+					var entryPoint = sprite.scripts[j][2];
+					// only hats
+					if (dictionnary.isHat(entryPoint[0][0])) {
+//						console.log("  b " + entryPoint[0][0] + "(" + entryPoint[0].slice(1) + ")");
+						spriteAst.scripts.push(dictionnary.parseBlock(entryPoint, "hat"))
 					}
 				}
 				// content
@@ -201,7 +210,7 @@ function parse(resolve, reject) {
 }
 
 function dumpAsC(resolve, reject) {
-	var output = C.dump(ast);
+	var output = C.dump(ast, config);
 	resolve(output);
 }
 

@@ -1,3 +1,7 @@
+#ifndef SCRATCH_SCHEDULER_H
+#define SCRATCH_SCHEDULER_H
+
+
 #include <setjmp.h>
 
 typedef struct _schedulable schedulable;
@@ -21,3 +25,5 @@ int schedule(schedulable *s);
 
 #define endSchedulable() \
 	longjmp(mainScheduler, -1)
+
+#endif

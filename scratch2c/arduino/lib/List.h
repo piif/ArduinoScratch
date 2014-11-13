@@ -2,6 +2,9 @@
 // Limitation: a Scratch list may contain numbers and strings.
 // This one can only handle one type per list.
 
+#ifndef SCRATCH_LIST_H
+#define SCRATCH_LIST_H
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdexcept>
@@ -103,3 +106,6 @@ private:
 	T *data;
 	int size;
 };
+
+#endif
+

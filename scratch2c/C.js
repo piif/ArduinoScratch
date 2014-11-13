@@ -257,9 +257,8 @@ function dumpScript(ast, env) {
 		registerHat(ast.kind, ast.params, funcName, env);
 		break;
 	case "procDef":
-		var proto = ast.params[0].replace(/"(.*)( t)?"/, '$1');
-		funcName = "userFunc_" + normalize(proto);
-		argTypes = proto.split(" ").slice(1);
+		funcName = "userFunc_" + normalize(ast.params[0]);
+		var argTypes = ast.params[0].substring(ast.params[0].indexOf('%')+1).split('%');
 		if (argTypes.length !== ast.params[1].length) {
 			return "// " + funcName + " : incoherency in argument list";
 		}
@@ -351,11 +350,16 @@ function dumpExpression(ast, env) {
 	case "getParam":
 		return normalize(ast.params[0]);
 	case "contentsOfList:":
-		return normalize(ast.params[0]) + ".toString()";
+		return normalize(ast.params[0]) /* + ".toString()" */;
 	case "list:contains:":
 		return normalize(ast.params[0]) + ".contains(" + dumpExpression(ast.params[1], env) + ")";
 	case "getLine:ofList:":
-		return normalize(ast.params[1]) + "[" + dumpExpression(ast.params[0], env) + "]";
+		var l = normalize(ast.params[1]);
+    	if (ast.params[0] === "last") {
+    		return l + "[" + l + ".length]";
+    	} else {
+    		return l + "[" + dumpExpression(ast.params[0], env) + "]";
+    	}
 	case "lineCountOfList:":
 		return normalize(ast.params[0]) + ".length";
 
@@ -623,6 +627,12 @@ function dumpStatements(ast, env) {
 	    	result.push(funcName + "(" + params + ");");
 	    	break;
 
+		case "extension call":
+			var funcName = normalize(s.extension) + "::" + normalize(s.method);
+			var params = [ "env" ].concat(dumpParams(s.params, env)).join(",");
+	    	result.push(funcName + "(" + params + ");");
+	    	break;
+
 		// variable changes
 	    case "setVar:to:":
 	    	result.push(normalize(s.params[0]) + " = " + dumpExpression(s.params[1], env) + ";");
@@ -673,6 +683,20 @@ function dumpStatements(ast, env) {
 		}
 	}
 	return result;
+}
+function dumpExtensions(ast, env) {
+	var output = [];
+	for (var e in ast.extensions) {
+		if (!ast.extensions.hasOwnProperty(e)) {
+			continue;
+		}
+		output.push("//   " + e);
+//		output.push("#include \"" + normalize(e) + ".h\"");
+	}
+	if (output.length > 0) {
+		output.unshift("// uses extensions :");
+	}
+	return output;
 }
 
 function dumpSprites(ast, env) {
@@ -779,14 +803,21 @@ function dumpMain(ast, env) {
 	output.push("};");
 	output.push(env.mainClass + " runtime(env);");
 	output.push("int main() {");
-	output.push([
-		"runtime.run();",
-	]);
+	var mainCode = [];
+	for (var e in ast.extensions) {
+		if (!ast.extensions.hasOwnProperty(e)) {
+			continue;
+		}
+		mainCode.push(normalize(e) + "::init(env);");
+//		output.push("#include \"" + normalize(e) + ".h\"");
+	}
+	mainCode.push("runtime.run();");
+	output.push(mainCode);
 	output.push("}");
 	return output;
 }
 
-function dump(ast) {
+function dump(ast, config) {
 	var env = {
 		mainClass: "Scratch_" + ast.sourceName,
 		messages: {}, // list of message labels, value = index
@@ -794,7 +825,14 @@ function dump(ast) {
 		spriteNames: []
 	};
 
+	var includes = [ "#include \"Scratch.h\"" ];
+	if (config.includes) {
+		for (var i = 0; i < config.includes.length; i++) {
+			includes.push("#include \"" + config.includes[i] + "\"");
+		}
+	}
 	// must dump sprites first to populate spriteNames and message lists
+	var extensions = dumpExtensions(ast, env);
 	var sprites = dumpSprites(ast, env);
 	var scene = dumpScene(ast, env);
 	// then proto and main
@@ -804,7 +842,8 @@ function dump(ast) {
 	// but proto must be sent first
 	var output = [].concat(
 		"// project " + ast.source,
-		"#include \"Scratch.h\"",
+		includes,
+		extensions,
 		proto,
 		sprites,
 		scene,
