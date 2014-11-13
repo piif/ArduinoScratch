@@ -26,10 +26,19 @@ namespace led_strip_extension {
 			printf("led_strip_extension::setStripAll(%d)\n", color);
 		#endif
 	}
-	void setStripColors(Environment *env, List<int> colors) {
+	void setStripAll(Environment *env, float color) {
+		setStripAll(env, (int)color);
+	}
+	void setStripColors(Environment *env, List<int> &colors) {
 		#ifdef ARDUINO
 		#else
 			printf("led_strip_extension::setStripColors(%d, %d, ...)\n", colors[1], colors[2]);
+		#endif
+	}
+	void setStripColors(Environment *env, List<float> &colors) {
+		#ifdef ARDUINO
+		#else
+			printf("led_strip_extension::setStripColors(%f, %f, ...)\n", colors[1], colors[2]);
 		#endif
 	}
 	void setStripLight(Environment *env, int light) {
@@ -37,6 +46,9 @@ namespace led_strip_extension {
 		#else
 			printf("led_strip_extension::setStripLight(%d)\n", light);
 		#endif
+	}
+	void setStripLight(Environment *env, float light) {
+		setStripLight(env, (int)light);
 	}
 	void rainbow(Environment *env) {
 		#ifdef ARDUINO

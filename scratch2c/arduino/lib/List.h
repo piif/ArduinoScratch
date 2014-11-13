@@ -11,7 +11,9 @@
 
 using namespace std;
 
-#define StepSize 5
+// 7 to avoid repeated realloc when append/remove/insert on
+// list with a round item number
+#define StepSize 7
 
 template<typename T> class List {
 public:
@@ -30,7 +32,7 @@ public:
 		memmove(cloned->data, data, sizeof(T) * length);
 	}
 
-	T operator[](int i) {
+	T &operator[](int i) {
 		if (i < 1 || i > length) {
 			throw out_of_range("List[] index out of range");
 		}
@@ -73,12 +75,12 @@ public:
 		data[i - 1] = value;
 	}
 
-	void setAt(int i, T value) {
-		if (i < 1 || i > length) {
-			throw out_of_range("List.setAt index out of range");
-		}
-		data[i - 1] = value;
-	}
+//	void setAt(int i, T value) {
+//		if (i < 1 || i > length) {
+//			throw out_of_range("List.setAt index out of range");
+//		}
+//		data[i - 1] = value;
+//	}
 
 	~List() {
 		free(data);
