@@ -66,6 +66,22 @@ structure d'un project scratch : un fichier s2b est un zip avec :
 			"listName": "une liste", // pareil pour les listes ...
 		}
 	}],
+	"info": {
+		"savedExtensions": [{
+			"javascriptURL": "...",
+			"menus": {
+				"led": ["on", "off"]
+			},
+			"extensionName": "...",
+			"blockSpecs": [["", "set led %m.led", "setLed", "on"],
+				["", "toggle led state", "toggleLed"],
+				["r", "led state", "getLed"],
+				["h", "when button is pressed", "onButton"]
+			]
+		}],
+		...
+		"projectID": "26016195",
+	}
 }
 
 les blocs de scripts :
