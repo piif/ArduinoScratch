@@ -1,4 +1,4 @@
 /target
 /scratch2c/arduino/target/
-/data
+/data/*
 node_modules
