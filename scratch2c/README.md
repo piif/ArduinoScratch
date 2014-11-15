@@ -130,167 +130,6 @@ plus facilement lesquels ignorer
 dans http://wiki.scratch.mit.edu/wiki/Scratch_File_Format_%282.0%29/Block_Selectors il
 y a à peu près toutes les commandes, soit 172 ! (en fait, il y a des obsolètes en trop) :
 
-	-
-	*
-	/
-	&
-	%
-	+
-	<
-	=
-	>
-	|
-	answer
-	append:toList:
-	backgroundIndex
-	bounceOffEdge
-	broadcast:
-	changeGraphicEffect:by:
-	changePenHueBy:
-	changePenShadeBy:
-	changePenSizeBy:
-	changeSizeBy:
-	changeTempoBy:
-	changeVar:by:
-	changeVolumeBy:
-	changeXposBy:
-	changeYposBy:
-	clearPenTrails
-	color:sees:
-	comeToFront
-	computeFunction:of:
-	concatenate:with:
-	contentsOfList:
-	costumeIndex
-	costumeName
-	createCloneOf
-	deleteClone
-	deleteLine:ofList:
-	distanceTo:
-	doAsk
-	doBroadcastAndWait
-	doForever
-	doForeverIf
-	doForLoop
-	doIf
-	doIfElse
-	doPlaySoundAndWait
-	doRepeat
-	doReturn
-	doUntil
-	doWaitUntil
-	doWhile
-	drum:duration:elapsed:from:
-	filterReset
-	forward:
-	fxTest
-	getAttribute:of:
-	getLine:ofList:
-	getUserId
-	getUserName
-	glideSecs:toX:y:elapsed:from:
-	goBackByLayers:
-	gotoSpriteOrMouse:
-	gotoX:y:
-	heading
-	heading:
-	hide
-	hideAll
-	hideList:
-	hideVariable:
-	insert:at:ofList:
-	instrument:
-	isLoud
-	keyPressed:
-	letter:of:
-	lineCountOfList:
-	list:contains:
-	lookLike:
-	midiInstrument:
-	mousePressed
-	mouseX
-	mouseY
-	nextCostume
-	nextScene
-	not
-	noteOn:duration:elapsed:from:
-	obsolete
-	penColor:
-	penSize:
-	playDrum
-	playSound:
-	pointTowards:
-	putPenDown
-	putPenUp
-	randomFrom:to:
-	readVariable
-	rest:elapsed:from:
-	rounded
-	say:
-	say:duration:elapsed:from:
-	sayNothing
-	scale
-	sceneName
-	scrollAlign
-	scrollRight
-	scrollUp
-	senseVideoMotion
-	sensor:
-	sensorPressed:
-	setGraphicEffect:to:
-	setLine:ofList:to:
-	setPenHueTo:
-	setPenShadeTo:
-	setRotationStyle
-	setSizeTo:
-	setTempoTo:
-	setVar:to:
-	setVideoState
-	setVideoTransparency
-	setVolumeTo:
-	show
-	showList:
-	showVariable:
-	soundLevel
-	sqrt + abs, sin, cos, tan, asin, acos, atan, e^, 10^, ln, log, floor, ceiling
-	stampCostume
-	startScene
-	startSceneAndWait
-	stopAll
-	stopAllSounds
-	stopScripts
-	stopSound:
-	stringLength:
-	tempo
-	think:
-	think:duration:elapsed:from:
-	timeAndDate
-	timer
-	timerReset
-	timestamp
-	touching:
-	touchingColor:
-	turnAwayFromEdge
-	turnLeft:
-	turnRight:
-	undefined
-	volume
-	wait:elapsed:from:
-	warpSpeed
-	whenClicked
-	whenCloned
-	whenGreenFlag
-	whenIReceive
-	whenKeyPressed
-	whenSceneStarts
-	whenSensorGreaterThan
-	xpos
-	xpos:
-	xScroll
-	ypos
-	ypos:
-	yScroll
-
 Quelques joyeusetés sur les clones :
 quand un lutin est cloné :
 - ses variables le sont aussi => le constructeur doit initialiser les valeurs à celle du parent
@@ -304,3 +143,22 @@ quand un lutin est cloné :
 De plus :
 - on ne peut pas détruire la première instance ("delete this clone" est ignoré)
 - le tempo est global
+
+Les cas où un block doit faire un yield (http://scratch.mit.edu/discuss/topic/30927/?page=1#post-555526) :
+	    piif wrote:
+	    does the “well-defined yield points” list is clearly defined ?
+	    at end of each loop in infinite repeat I suppose, but are there other points ?
+	
+	When run-without-screen-refresh is disabled:
+	
+	    After evaluating one cycle of a loop (repeat, forever, etc.)
+	    When waiting for the response to a blocking extension reporter or command.
+	    During the execution of a timed block (glide, say…for, etc.) or a block that pauses the thread (ask…and wait, wait, wait until)
+	    When waiting for a broadcast to finish in a broadcast…and wait block.
+	    When waiting for a backdrop to finish in a switch backdrop to…and wait block.
+	    Before a procedure call that is recursive (with up to four intermediate calls).
+	
+	When run-without-screen-refresh is enabled:
+	
+	    If execution time has exceeded 500 ms, at any of the yield points above or before calling a procedure.
+    
