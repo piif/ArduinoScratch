@@ -3,11 +3,10 @@
 export PROJECT_DIR := $(dir $(realpath ${MAKEFILE_LIST}))
 
 # to define to ArduinoCore root directory 
-CORE_DIR := ${PROJECT_DIR}../ArduinoCore/
+CORE_DIR := ${PROJECT_DIR}../../../ArduinoCore/
 
 # other arduino librairies project pathes this project depends on
-export DEPENDENCIES := ${CORE_DIR} ${CORE_DIR}../ArduinoLibs/
-# ${CORE_DIR}../ArduinoTools/
+export DEPENDENCIES := ${CORE_DIR} Scratch ${CORE_DIR}../ArduinoTools/
 
 # generate assembler source code also
 export WITH_ASSEMBLY := yes
@@ -24,11 +23,17 @@ export WITH_UPLOAD := no
 # TODO : try to auto detect with lsusb + /proc exploration
 export UPLOAD_DEVICE := /dev/ttyACM0
 
+export STANDARD := -std=gnu++11
+
 #export MAIN_SOURCE := ${PROJECT_DIR}main.cpp
 
 # call lib.makefile for a utilities library or bin.makefile for a program
-all upload console:
+all upload console: lib
 	${MAKE} -f ${CORE_DIR}etc/bin.makefile $@
+
+lib:
+	${MAKE} -f ${CORE_DIR}etc/lib.makefile DEPENDENCIES= \
+		LIB_NAME=Scratch PROJECT_DIR=${PROJECT_DIR}Scratch/
 
 clean:
 ifeq (${TARGET},)
@@ -44,6 +49,8 @@ target/libscratch.a: target/Scratch.o
 	${AR} -r $@ $<
 #	ranlib $@
 
-CFLAGS=-g -Ilib -std=c++11
+CFLAGS=-g -Ilib ${STANDARD}
 target/Scratch.o: lib/Scratch.cpp lib/Scratch.h lib/List.h
 	${CXX} -c ${CFLAGS} $< -o $@
+
+.PHONY: bin lib upload

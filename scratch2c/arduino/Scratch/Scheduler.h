@@ -20,7 +20,7 @@ int newSchedulable(schedulable *s, schedulableFunc *f, void *data);
  */
 int schedule(schedulable *s);
 
-#define yield() \
+#define schedulerYield() \
 	if (setjmp(sched->env) == 0) longjmp(mainScheduler, 1)
 
 #define endSchedulable() \

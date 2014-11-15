@@ -7,7 +7,14 @@
 
 #include <string.h>
 #include <stdlib.h>
+#ifdef ARDUINO
+#include <Arduino.h>
+#define throw
+#define out_of_range(m) {Serial.println(m); for(;;);}
+#define logic_error(m) {Serial.println(m); for(;;);}
+#else
 #include <stdexcept>
+#endif
 
 using namespace std;
 

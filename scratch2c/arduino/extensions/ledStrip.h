@@ -6,8 +6,11 @@
 #endif
 
 namespace led_strip_extension {
+	int stripLen, light;
+
 	void initStrip(Environment *env, int len) {
 		#ifdef ARDUINO
+			stripLen = len;
 			stripInit(len, STRIP_PIN);
 			stripUpdate(); // Initialize all pixels to 'off'
 		#else
@@ -16,12 +19,16 @@ namespace led_strip_extension {
 	}
 	void setStripOff(Environment *env) {
 		#ifdef ARDUINO
+			stripOff();
 		#else
 			puts("led_strip_extension::setStripOff");
 		#endif
 	}
-	void setStripAll(Environment *env, int color) {
+	void setStripAll(Environment *env, int h) {
 		#ifdef ARDUINO
+			Color c;
+			HLtoRGB(h, light, &c);
+			stripAll(c);
 		#else
 			printf("led_strip_extension::setStripAll(%d)\n", color);
 		#endif
@@ -31,24 +38,33 @@ namespace led_strip_extension {
 	}
 	void setStripColors(Environment *env, List<int> &colors) {
 		#ifdef ARDUINO
+			for(int i = 1; i <= colors.length; i++) {
+				stripSetHL(i - 1, colors[i], light);
+			}
+			stripUpdate();
 		#else
 			printf("led_strip_extension::setStripColors(%d, %d, ...)\n", colors[1], colors[2]);
 		#endif
 	}
 	void setStripColors(Environment *env, List<float> &colors) {
 		#ifdef ARDUINO
+			for(int i = 1; i <= colors.length; i++) {
+				stripSetHL(i - 1, (int)(colors[i]), light);
+			}
+			stripUpdate();
 		#else
 			printf("led_strip_extension::setStripColors(%f, %f, ...)\n", colors[1], colors[2]);
 		#endif
 	}
-	void setStripLight(Environment *env, int light) {
+	void setStripLight(Environment *env, int l) {
 		#ifdef ARDUINO
+			light = l;
 		#else
 			printf("led_strip_extension::setStripLight(%d)\n", light);
 		#endif
 	}
-	void setStripLight(Environment *env, float light) {
-		setStripLight(env, (int)light);
+	void setStripLight(Environment *env, float l) {
+		light = (int)l;
 	}
 	void rainbow(Environment *env) {
 		#ifdef ARDUINO
@@ -65,6 +81,10 @@ namespace led_strip_extension {
 	}
 
 	void init(Environment *env) {
-		puts("led_strip_extension::init");
+		#ifdef ARDUINO
+			Serial.println("led_strip_extension::init");
+		#else
+			puts("led_strip_extension::init");
+		#endif
 	}
 };

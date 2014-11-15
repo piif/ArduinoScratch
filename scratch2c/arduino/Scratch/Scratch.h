@@ -13,7 +13,7 @@
 #ifdef WITH_SCHEDULER
 	#include "Scheduler.h"
 #else
-	#define yield()
+	#define schedulerYield()
 #endif
 
 #include "List.h"
@@ -176,7 +176,7 @@ public:
 	List<Sprite *> sprites;
 
 	int tempo = 60;
-	long beat = 60 * 1000 / tempo; // beat duration in ms
+	long beat = 60 * 1000L / tempo; // beat duration in ms
 
 	// last input value
 	const char* answer = NULL;

@@ -218,7 +218,8 @@ function dumpVariables(ast, env) {
 			// TODO : how to specify type of list ?
 			output.push("List<" + detail.subType + "> " + name + ";");
 		} else {
-			output.push(detail.type + " " + normalize(v.name) + " = " + detail.value + ";");
+			output.push((detail.type === "string" ? "const char *" : detail.type)
+					+ " " + normalize(v.name) + " = " + detail.value + ";");
 		}
 	}
 	if (output.length) {
@@ -284,7 +285,7 @@ function dumpScript(ast, env) {
 			// %m.‹menu›	Readonly slot with menu
 			case "s":
 			case "m":
-				params.push("String " + name);
+				params.push("const char *" + name);
 				break;
 			}
 		}
@@ -581,7 +582,7 @@ function dumpStatements(ast, env) {
 			var v = "__l" + env.varCount;
 			result.push(
 				"for(int "+v+" = 0; "+v+" < (" + dumpExpression(s.params[0], env) + "); "+v+"++) {",
-				dumpStatements(s.params[1], env).concat("yield();"),
+				dumpStatements(s.params[1], env).concat("schedulerYield();"),
 				"}");
 			break;
 
@@ -607,13 +608,13 @@ function dumpStatements(ast, env) {
 			// TODO : verify in scratch : while or do/while ?
 			result.push(
 				"while(!(" + dumpExpression(s.params[0], env) + ")) {",
-				dumpStatements(s.params[1], env).concat("yield();"),
+				dumpStatements(s.params[1], env).concat("schedulerYield();"),
 				"}");
 	    	break;
 		case "doForever":
 			result.push(
 				"for(;;) {",
-				dumpStatements(s.params[0], env).concat("yield();"),
+				dumpStatements(s.params[0], env).concat("schedulerYield();"),
 				"}");
 	    	break;
 		case "stopScripts":
@@ -803,7 +804,7 @@ function dumpMain(ast, env) {
 	]);
 	output.push("};");
 	output.push(env.mainClass + " runtime(env);");
-	output.push("int main() {");
+	output.push("int scratchMain() {");
 	var mainCode = [];
 	for (var e in ast.extensions) {
 		if (!ast.extensions.hasOwnProperty(e)) {

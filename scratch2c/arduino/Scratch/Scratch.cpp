@@ -6,12 +6,25 @@
 
 #include "Scratch.h"
 
+extern void scratchMain(void);
+
 #ifdef ARDUINO
-	#define time() (millis()/1000)
+	#define time(z) (millis()/1000)
 	typedef long time_t;
 	#define pause(ms) delay(ms)
 	#define readInput() "TODO"
 	#define LOG(m) Serial.println(m)
+
+	#ifndef DEFAULT_BAUDRATE
+		#define DEFAULT_BAUDRATE 115200
+	#endif
+	void setup() {
+		Serial.begin(DEFAULT_BAUDRATE);
+		Serial.println("setup");
+	}
+	void loop() {
+		scratchMain();
+	}
 #else
 //	#include <stddef>
 	#include <time.h>
@@ -21,6 +34,9 @@
 	}
 	#define readInput() "TODO"
 	#define LOG(m) puts(m)
+	int main() {
+		scratchMain();
+	}
 #endif
 
 
@@ -300,12 +316,12 @@ void ScratchRuntime::playDrum(int drum) {
 }
 void ScratchRuntime::changeTempoBy_(int dt) {
 	setTempoTo_(tempo + dt);
-	beat = 60 * 1000 / tempo;
+	beat = 60 * 1000L / tempo;
 
 }
 void ScratchRuntime::setTempoTo_(int t) {
 	tempo = (t > 0) ? t : 1;
-	beat = 60 * 1000 / tempo;
+	beat = 60 * 1000L / tempo;
 }
 
 void ScratchRuntime::clearPenTrails() {
