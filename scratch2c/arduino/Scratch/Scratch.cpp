@@ -241,7 +241,7 @@ void ScratchObject::wait_elapsed_from_(float seconds) {
 	pause(seconds * 1000);
 }
 void ScratchObject::rest_elapsed_from_(float beats) {
-	pause(beats * beats);
+	pause(beats * env->runtime->beat);
 }
 
 Scene::Scene(Environment *env) : ScratchObject(env) {
@@ -384,8 +384,11 @@ long ScratchRuntime::timestamp() {
 }
 
 int Scratch::randomFrom_to_(int from, int to) {
-	// TODO
-	return from;
+#ifdef ARDUINO
+	return random(from, to + 1);
+#else
+	return from + rand() % (from - to + 1);
+#endif
 }
 char * Scratch::concatenate_with_(char *a, char *b) {
 	// TODO
