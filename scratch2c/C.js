@@ -597,7 +597,7 @@ function dumpStatements(ast, env) {
 				"if(" + dumpExpression(s.params[0], env) + ") {",
 				dumpStatements(s.params[1], env),
 				"} else {",
-				dumpStatements(s.params[0], env),
+				dumpStatements(s.params[2], env),
 				"}");
 			break;
 		case "doWaitUntil":
