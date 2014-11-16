@@ -30,7 +30,7 @@ namespace led_strip_extension {
 			HLtoRGB(h, light, &c);
 			stripAll(c);
 		#else
-			printf("led_strip_extension::setStripAll(%d)\n", color);
+			printf("led_strip_extension::setStripAll(%d)\n", h);
 		#endif
 	}
 	void setStripAll(Environment *env, float color) {
@@ -60,7 +60,7 @@ namespace led_strip_extension {
 		#ifdef ARDUINO
 			light = l;
 		#else
-			printf("led_strip_extension::setStripLight(%d)\n", light);
+			printf("led_strip_extension::setStripLight(%d)\n", l);
 		#endif
 	}
 	void setStripLight(Environment *env, float l) {

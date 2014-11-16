@@ -43,14 +43,13 @@ ifneq (${TARGET},)
 	rm -rf ${PROJECT_DIR}target/${TARGET}
 endif
 	
-scratch: target/libscratch.a
+libScratch: target/libScratch.a
 
-target/libscratch.a: target/Scratch.o
+target/libScratch.a: target/Scratch.o
 	${AR} -r $@ $<
-#	ranlib $@
 
-CFLAGS=-g -Ilib ${STANDARD}
-target/Scratch.o: lib/Scratch.cpp lib/Scratch.h lib/List.h
+CFLAGS=-g -IScratch ${STANDARD}
+target/Scratch.o: Scratch/Scratch.cpp Scratch/Scratch.h Scratch/List.h
 	${CXX} -c ${CFLAGS} $< -o $@
 
 .PHONY: bin lib upload
