@@ -62,32 +62,28 @@ Scratch side :
 How does it work ?
 ----------------
 
-* /node : la partie nodejs
-  * /client : une page de test de la partie serveur (plus maintenue)
-  * /server.js : le programme node à lancer pour faire le pont entre Scratch et Arduino
+Directory tree :
+- - - - - - -
 
-* /extensions : chaque extension est placée ici, dans un répertoire
-  * lib : un dossier contenant des fichiers inclus par les autres.
-    Notamment la couche "communication" se cache là dedans
-  * basic : le code arduino et js de l'exemple ci-dessus
-  * ledStrip : pilotage d'une bande de LED adressables depuis Scratch
+* /node : nodejs code
+  * /client : an obsolete test page
+  * /server.js : the node program to launch as bridge between Scratch and Arduino
 
-* /data : des fichiers de test et de données
+* /extensions : each extension has it's own directory here
+  It should contain Arduino native code and js extension script.
+  * lib : commun utility code (communication layer is there)
+  * basic : simple extension as example
+  * ledStrip : another extension to deal with an addressable LED strip
 
-* /scratch2c : en chantier ...
-  L'idée est de convertir un bout de programme Scratch en code Arduino, pour pouvoir
-  l'embarquer sur l'arduino
-  Mais ça, c'est pas encore au point ...
+extensions :
+- - - - -
 
-Code des extensions :
-===================
-Une extension est chargée dans Scratch via le serveur node, qui y injecte en
-passant un fichier (extensions/lib/autoPrepend.js)
-Ce fichier contient quelques méthodes pour charger des dépendances (version simplifiée
-de require.js) et défini des variables MY_URL et ROOT_URL qui permettent aux extensions de
-savoir de où elles ont été chargées.
+ An extension is loaded in Scratch thru the node server, it injects a file content
+(extensions/lib/autoPrepend.js) to declare some utility methods (dependencies injection "à la"
+require.js) and defines variables MY_URL and ROOT_URL which are to be used by user code to
+detect extension remote URL (needed to establish a websocket for example).
 
-Pour le détail du fonctionnement d'une extension, voir le code de basic.js, qui est commenté
+For the extension internal, see basic.js code, which is commented
 
 TODO :
 ----
@@ -99,3 +95,50 @@ TODO :
 
 Part II : Convert Scratch 2 to Arduino
 ======================================
+
+This part is a second step in Scratch integration with Arduino. It's goal is to convert a
+full Scratch project in Arduino code to make it runnable standalone.
+Sprite costume, sounds and other stuff have no direct sense in Arduino thus some concept are
+ignored or partially implemented.
+Furthermore, for the moment, the "parallel" behavior of Scratch is not implemented
+(if 2 "green flag" hats launch an infinite loop, only one of them will run)
+
+The build chain is very basic for the moment.
+First of all, you need to clone my Arduino toolchain, since I use it to compile the generated
+ Arduino code and its dependencies
+You need https://github.com/piif/ArduinoCore and https://github.com/piif/ArduinoTools
+
+Then, here is an example :
+ https://github.com/piif/ArduinoScratch/tree/master/scratch2c/examples
+
+* The .sb2 file is a scratch project I can't share since it refers an extension
+ (at the moment, Scratch forbid this).
+* You can directly download this project main file here :
+  http://projects.scratch.mit.edu/internalapi/project/32894984/get/
+  the result is the same file as the "Guirlande_chenille_3.json" in the directory above
+* You have to name this file with a "json" extension
+* You must create a config file, with the same name, in the same directory, but with
+  "config" extension.
+  For this example, you can use "Guirlande_chenille_3.config" file.
+  This file must declare "includes" to generate in the code (here, the ledStrip library) and
+  sprites or variables which must not be generated (here, "lampe" sprite is just to simulate
+  LEDs in Scratch, we remove them from Arduino code since we have actual ones)
+* Then, you can launch conversion by calling the Makefile in scratch2c directory :
+  make examples/Guirlande_chenille_3.cpp 
+* Then you can compile it with the same Makefile, but a bit more complex command line :
+  make MAIN_SOURCE=examples/Guirlande_chenille_3 MAIN_NAME=Guirlande_chenille_3 TARGET=Uno all
+  
+  On first run, this command will compile libScratch.a into arduino/Scratch/target/Uno
+  It will compile the Guirlande_chenille_3.cpp file into an arduino binary in target/Uno/
+  You can upload this code
+ 
+  If you clone also my arddude project (https://github.com/piif/arddude) you can use "console"
+instead of "all" to upload and launch serial console directly.
+
+
+* /data : test and work files
+
+* /scratch2c : en chantier ...
+  L'idée est de convertir un bout de programme Scratch en code Arduino, pour pouvoir
+  l'embarquer sur l'arduino
+  Mais ça, c'est pas encore au point ...
