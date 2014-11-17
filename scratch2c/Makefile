@@ -1,12 +1,18 @@
+# THIS RULE GEENRATE CPP CODE FROM SCRATCH PROJECT
+%.cpp: %.json %.config
+	node ../scratch2c/s2c.js $*.config $*.json > $@ || rm $@
+
+# ARDUINO TOOLCHAIN PART
+
 # the directory this project is in
 # must be defined for generic makefile to work
 export PROJECT_DIR := $(dir $(realpath ${MAKEFILE_LIST}))
 
 # to define to ArduinoCore root directory 
-CORE_DIR := ${PROJECT_DIR}../../../ArduinoCore/
+CORE_DIR := ${PROJECT_DIR}../../ArduinoCore/
 
 # other arduino librairies project pathes this project depends on
-export DEPENDENCIES := ${CORE_DIR} Scratch ${CORE_DIR}../ArduinoTools/
+export DEPENDENCIES := ${CORE_DIR} arduino/Scratch ${CORE_DIR}../ArduinoTools/
 
 # generate assembler source code also
 export WITH_ASSEMBLY := yes
@@ -25,15 +31,14 @@ export UPLOAD_DEVICE := /dev/ttyACM0
 
 export STANDARD := -std=gnu++11
 
-#export MAIN_SOURCE := ${PROJECT_DIR}main.cpp
-
-# call lib.makefile for a utilities library or bin.makefile for a program
-all upload console: lib
-	${MAKE} -f ${CORE_DIR}etc/bin.makefile $@
-
+# THIS RULE WILL COMPILE ARDUINO SCRATCH LIB
 lib:
 	${MAKE} -f ${CORE_DIR}etc/lib.makefile DEPENDENCIES= \
-		LIB_NAME=Scratch PROJECT_DIR=${PROJECT_DIR}Scratch/
+		LIB_NAME=Scratch PROJECT_DIR=${PROJECT_DIR}arduino/Scratch/
+
+# THIS RULE WILL COMPILE A GENERATED CPP FILE
+all upload console: lib
+	${MAKE} -f ${CORE_DIR}etc/bin.makefile USER_CFLAGS=-Iarduino $@
 
 clean:
 ifeq (${TARGET},)
@@ -42,7 +47,10 @@ endif
 ifneq (${TARGET},)
 	rm -rf ${PROJECT_DIR}target/${TARGET}
 endif
-	
+
+.PHONY: bin lib upload
+
+## THIS PART WILL COMPILE Scratch LIB FOR COMPUTER TARGET
 libScratch: target/libScratch.a
 
 target/libScratch.a: target/Scratch.o
@@ -52,4 +60,17 @@ CFLAGS=-g -IScratch ${STANDARD}
 target/Scratch.o: Scratch/Scratch.cpp Scratch/Scratch.h Scratch/List.h
 	${CXX} -c ${CFLAGS} $< -o $@
 
-.PHONY: bin lib upload
+## THIS PART WILL COMPILE GENERATED CODE FOR COMPUTER TARGET
+
+CFLAGS=-g -I../scratch2c/arduino -I../scratch2c/arduino/Scratch -std=c++11
+%.o: %.cpp
+	@echo "cpp->o"
+	${CXX} -c ${CFLAGS} $< -o $@
+
+##$(info ${NATIVES:%.cpp=%.o})
+NATIVE_OBJS := ${NATIVES:%.cpp=%.o}
+
+LDFLAGS=-L../scratch2c/arduino/target
+%: %.o ${NATIVE_OBJS} ../scratch2c/arduino/target/libScratch.a
+	@echo "bin"
+	${CXX} ${LDFLAGS} $< ${NATIVE_OBJS} -o $@ -lScratch
