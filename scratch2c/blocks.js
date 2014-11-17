@@ -264,6 +264,14 @@ function expandParams(paramDesc, paramValues) {
 				} else if (specialChoice === "n") {
 					if (typeof v === "number") {
 						result.push(v);
+					} else if (typeof v === "string") {
+						if (parseInt(v).toString() === v) {
+							result.push(parseInt(v));
+						} else if (parseFloat(v).toString() === v) {
+							result.push(parseFloat(v));
+						} else {
+							throw new Error("Can't parse " + typeof(v) + " '" + v + "' as " + d);
+						}
 					} else if (typeof v === "object") {
 						result.push(parseBlock(v, "n"));
 					}
