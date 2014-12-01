@@ -1,7 +1,7 @@
 #include "Scratch.h"
 
 #ifdef ARDUINO
-	#define STRIP_PIN 8
+	#define STRIP_PIN A0
 	#include "ledStrip/strip.h"
 #endif
 
