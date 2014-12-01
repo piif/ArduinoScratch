@@ -655,13 +655,13 @@ function dumpStatements(ast, env) {
 	    	}
 	    	break;
 	    case "insert:at:ofList:":
-	    	var prefix = normalize(s.params[2]) + ".insertAt(" + dumpExpression(s.params[1], env) + ", ";
-	    	if (s.params[0] === "last") {
+	    	var prefix = normalize(s.params[2]) + ".insertAt(" + dumpExpression(s.params[0], env) + ", ";
+	    	if (s.params[1] === "last") {
 	    		result.push(prefix + normalize(s.params[2]) + ".length);");
-	    	} else if (s.params[0] === "random") {
+	    	} else if (s.params[1] === "random") {
 	    		result.push(prefix + "Scratch::random(1," + normalize(s.params[2]) + ".length));");
 	    	} else {
-	    		result.push(prefix + dumpExpression(s.params[0], env) + ");");
+	    		result.push(prefix + dumpExpression(s.params[1], env) + ");");
 	    	}
 	    	break;
 	    case "setLine:ofList:to:":
