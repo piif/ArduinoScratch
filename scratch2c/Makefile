@@ -57,12 +57,12 @@ target/libScratch.a: target/Scratch.o
 	${AR} -r $@ $<
 
 CFLAGS=-g -IScratch ${STANDARD}
-target/Scratch.o: Scratch/Scratch.cpp Scratch/Scratch.h Scratch/List.h
+target/Scratch.o: arduino/Scratch/Scratch.cpp arduino/Scratch/Scratch.h arduino/Scratch/List.h
 	${CXX} -c ${CFLAGS} $< -o $@
 
 ## THIS PART WILL COMPILE GENERATED CODE FOR COMPUTER TARGET
 
-CFLAGS=-g -I../scratch2c/arduino -I../scratch2c/arduino/Scratch -std=c++11
+CFLAGS=-g -Iarduino -Iarduino/Scratch -std=c++11
 %.o: %.cpp
 	@echo "cpp->o"
 	${CXX} -c ${CFLAGS} $< -o $@
@@ -70,7 +70,7 @@ CFLAGS=-g -I../scratch2c/arduino -I../scratch2c/arduino/Scratch -std=c++11
 ##$(info ${NATIVES:%.cpp=%.o})
 NATIVE_OBJS := ${NATIVES:%.cpp=%.o}
 
-LDFLAGS=-L../scratch2c/arduino/target
-%: %.o ${NATIVE_OBJS} ../scratch2c/arduino/target/libScratch.a
+LDFLAGS=-Ltarget
+%: %.o ${NATIVE_OBJS} target/libScratch.a
 	@echo "bin"
 	${CXX} ${LDFLAGS} $< ${NATIVE_OBJS} -o $@ -lScratch
