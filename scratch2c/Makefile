@@ -1,6 +1,9 @@
-# THIS RULE GEENRATE CPP CODE FROM SCRATCH PROJECT
+# THIS RULE GENERATE CPP CODE FROM SCRATCH PROJECT
 %.cpp: %.json %.config
 	node ../scratch2c/s2c.js $*.config $*.json > $@ || rm $@
+
+%.cpp: %.json ${S2C_CONFIG}
+	node ../scratch2c/s2c.js ${S2C_CONFIG} $*.json > $@ || rm $@
 
 # ARDUINO TOOLCHAIN PART
 
@@ -27,7 +30,11 @@ export WITH_PRINT_SIZE := yes
 export WITH_UPLOAD := no
 # where to upload
 # TODO : try to auto detect with lsusb + /proc exploration
-export UPLOAD_DEVICE := /dev/ttyACM0
+ifeq (${shell uname},Linux)
+	export UPLOAD_DEVICE := /dev/ttyACM0
+else
+	export UPLOAD_DEVICE := com5
+endif
 
 export STANDARD := -std=gnu++11
 
