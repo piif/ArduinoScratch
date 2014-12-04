@@ -123,9 +123,12 @@ function parse(resolve, reject) {
 	}
 
 	// extensions
+	if (config.hasOwnProperty("extensions")) {
+		dictionnary.parseExtensions(config.extensions, ast.extensions);
+	}
 	if (source.hasOwnProperty("info") && source.info.hasOwnProperty("savedExtensions")) {
 //		console.log("E " + ext[j].extensionName);
-		ast.extensions = dictionnary.parseExtensions(source.info.savedExtensions);
+		dictionnary.parseExtensions(source.info.savedExtensions, ast.extensions);
 	}
 
 	// top-level blocks

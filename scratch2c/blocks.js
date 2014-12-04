@@ -46,7 +46,7 @@ function assertType(expected, observed) {
 //list of parsed extensions
 var extensions = {};
 
-function parseExtensions(extensionSpecs) {
+function parseExtensions(extensionSpecs, extensionsOutput) {
 	for(var i = 0; i < extensionSpecs.length; i++) {
 		var ext = extensionSpecs[i];
 		var menus = {};
@@ -62,9 +62,10 @@ function parseExtensions(extensionSpecs) {
 			var spec = ext.blockSpecs[j];
 			entries[spec[2]] = { params: parsePrototype(spec[1], menus) };
 		}
-		extensions[ext.extensionName] = { menus: menus, entries: entries };
+		extensions[ext.extensionName] =
+			extensionsOutput[ext.extensionName] =
+			{ menus: menus, entries: entries };
 	}
-	return extensions;
 }
 
 function isHat(entry) {
