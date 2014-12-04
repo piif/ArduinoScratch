@@ -68,7 +68,7 @@ public:
 		return old;
 	}
 
-	void insertAt(int i, T value) {
+	void insertAt(T value, int i) {
 		if (i == length + 1) {
 			append(value);
 			return;
@@ -81,13 +81,6 @@ public:
 		memmove(&(data[i]), &(data[i - 1]), sizeof(T) * (length - i));
 		data[i - 1] = value;
 	}
-
-//	void setAt(int i, T value) {
-//		if (i < 1 || i > length) {
-//			throw out_of_range("List.setAt index out of range");
-//		}
-//		data[i - 1] = value;
-//	}
 
 	~List() {
 		free(data);
