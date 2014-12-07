@@ -1,7 +1,13 @@
 var MY_URL, ROOT_URL;
 
+document.getElementsByTagName('head')[0].lastChild.src;
+
 if (typeof MY_URL === "undefined") {
 	MY_URL = (new Error()).fileName;
+	if (typeof MY_URL === "undefined") {
+		// IE hack
+		MY_URL = document.getElementsByTagName('head')[0].lastChild.src;
+	}
 	ROOT_URL = /^(https?:\/\/[^\/]*).*$/.exec(MY_URL)[1] + "/";
 }
 

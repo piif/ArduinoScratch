@@ -6,14 +6,16 @@ var path = require('path'),
 var ROOT = path.dirname(__dirname);
 console.log(ROOT);
 
-var HTTP_PORT = 8000,
+var SERIAL_DEV = "com5";
+//var SERIAL_DEV = '/dev/ttyACM0';
+var HTTP_PORT = 80,
 	HTTP_HOST = "localhost",
 	HTTP_ROOT = "http://" + HTTP_HOST + ":" + HTTP_PORT + "/";
 
 // initialize serialport
 // remember to change this string if your arduino is using a different serial
 // port
-var sp = new SerialPort('/dev/ttyACM0', {
+var sp = new SerialPort(SERIAL_DEV, {
 	baudRate : 115200
 });
 
@@ -69,7 +71,7 @@ var readFile = function(pathname, res) {
  * 
  */
 var sendMessage = function(buffer, socket) {
-//	console.log("<<< " + buffer);
+	console.log("<<< " + buffer);
 	// concatenating the string buffers sent via usb port
 	arduinoMessage += buffer.toString();
 
@@ -101,7 +103,7 @@ io.sockets.on('connection', function(socket) {
 	// listen all the websocket "lightStatus" messages coming from the
 	// client.html page
 	socket.on('to_arduino', function(data) {
-//		console.log(">>> ", data, data.length);
+		console.log(">>> ", data, data.length);
 		sp.write(data);
 	});
 });
