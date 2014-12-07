@@ -3,7 +3,14 @@
 # EXAMPLE :
 #  ./convert.sh 37043356 noel examples/ledStrip.config
 
-ICI=$(cd $(dirname $0) ; /bin/pwd)
+cygTrunk() {
+	echo -n "$1" | sed 's/^\/cygdrive\/.//'
+}
+
+
+ICI=$(dirname $0)
+##ICI=$(cd $(dirname $0) ; /bin/pwd)
+ICI=$(cygTrunk "$ICI")
 OUTDIR="$ICI/../data"
 
 usage() {
@@ -54,30 +61,40 @@ if [ -z "$config" ] ; then
 	config="$OUTDIR/$project_name.config"
 fi
 
+project_file=$(cygTrunk "$project_file")
+config=$(cygTrunk "$config")
+
 echo "Project '$project_name' from '$project_id' / '$project_file' with '$config'"
 
 # stop at first error
 set -e
 
+DO() {
+	echo "======================" ; echo
+	echo "$@"
+	echo ; echo "======================"
+	eval "$@"
+}
+
 if [ -z "$project_file" ] ; then
 	project_file="$OUTDIR/$project_name.json"
 	# get project json file
-	wget -O "$project_file" "http://projects.scratch.mit.edu/internalapi/project/$project_id/get/"
+	DO wget -O "$project_file" "http://projects.scratch.mit.edu/internalapi/project/$project_id/get/"
 fi
 
 # convert to cpp file
-rm -f "$OUTDIR/$project_name.cpp"
-make "$OUTDIR/$project_name.cpp" S2C_CONFIG="$config"
+DO rm -f "$OUTDIR/$project_name.cpp"
+DO make "$OUTDIR/$project_name.cpp" S2C_CONFIG="$config"
 
 env=""
-if -n "$UPLOAD_DEVICE" ; then
+if [ -n "$UPLOAD_DEVICE" ] ; then
 	env="$env UPLOAD_DEVICE=$UPLOAD_DEVICE"
 fi
-if -n "$TARGET" ; then
+if [ -n "$TARGET" ] ; then
 	env="$env TARGET=$TARGET"
 else
 	env="$env TARGET=Uno"
 fi
 
-rm -f "$ICI/target/*"
-make MAIN_SOURCE="$OUTDIR/$project_name.cpp" MAIN_NAME="$project_name" TARGET=Uno console
+DO rm -rf "$ICI/target/*"
+DO make MAIN_SOURCE="$OUTDIR/$project_name.cpp" MAIN_NAME="$project_name" TARGET=Uno console
